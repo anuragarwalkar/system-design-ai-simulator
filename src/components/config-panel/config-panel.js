@@ -27,9 +27,15 @@ export class ConfigPanel {
       if (node) {
         this.currentNode = node;
         this.renderNodeConfig(node);
+        if (window.innerWidth <= 900) {
+          this.openMobileInspector();
+        }
       } else {
         this.currentNode = null;
         this.renderEmpty();
+        if (window.innerWidth <= 900) {
+          this.closeMobileInspector();
+        }
       }
     });
 
@@ -40,14 +46,39 @@ export class ConfigPanel {
     });
   }
 
+  openMobileInspector() {
+    const inspector = document.getElementById('app-inspector');
+    const backdrop = document.getElementById('inspector-backdrop');
+    if (inspector) inspector.classList.add('mobile-open');
+    if (backdrop) backdrop.classList.add('active');
+  }
+
+  closeMobileInspector() {
+    const inspector = document.getElementById('app-inspector');
+    const backdrop = document.getElementById('inspector-backdrop');
+    if (inspector) inspector.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+  }
+
   renderEmpty() {
     this.container.innerHTML = `
+      <div class="config-header" style="border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; padding: 10px 14px;">
+        <button id="btn-close-empty-inspector" class="btn-icon-close" title="Close Inspector">✕</button>
+      </div>
       <div class="config-empty">
         <div class="empty-icon">⚙️</div>
         <h3 class="empty-title">Node Inspector</h3>
-        <p class="empty-desc">Click any component on the canvas to configure its properties, replication, or cache policies.</p>
+        <p class="empty-desc">Tap any component on the canvas to configure its properties, replication, or cache policies.</p>
       </div>
     `;
+
+    const closeBtn = this.container.querySelector('#btn-close-empty-inspector');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        stateManager.clearSelection();
+        this.closeMobileInspector();
+      });
+    }
   }
 
   renderNodeConfig(node) {

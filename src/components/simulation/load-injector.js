@@ -15,6 +15,7 @@ import { EVENTS } from '../../core/constants.js';
 export class LoadInjector {
   constructor(containerElement) {
     this.container = containerElement;
+    this.isCollapsed = false;
     this.render();
     this._bindEvents();
   }
@@ -24,7 +25,7 @@ export class LoadInjector {
     const rps = stateManager.simConfig.target_rps;
 
     this.container.innerHTML = `
-      <div class="load-card">
+      <div class="load-card ${this.isCollapsed ? 'collapsed' : ''}" id="load-card-inner">
         <div class="load-card-header">
           <button id="btn-toggle-sim" class="btn-sim-play ${isRunning ? 'active' : ''}" title="${isRunning ? 'Pause Simulation' : 'Start Simulation'}">
             ${isRunning
@@ -33,8 +34,14 @@ export class LoadInjector {
           </button>
           <div class="load-title-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span class="load-title">Synthetic User Load</span>
+            <span class="load-title">Synthetic Load</span>
           </div>
+
+          <span class="load-card-min-stats" id="load-min-rps">${rps >= 1000 ? `${(rps / 1000).toFixed(0)}k rps` : `${rps} rps`}</span>
+
+          <button id="btn-collapse-load" class="btn-load-toggle-collapse" title="${this.isCollapsed ? 'Expand Controls' : 'Collapse Controls'}">
+            ${this.isCollapsed ? '▲' : '▼'}
+          </button>
         </div>
 
         <div class="load-controls-row">
@@ -59,6 +66,16 @@ export class LoadInjector {
     const slider = this.container.querySelector('#load-slider');
     const numInput = this.container.querySelector('#load-number-input');
     const chips = this.container.querySelectorAll('.profile-chip');
+    const collapseBtn = this.container.querySelector('#btn-collapse-load');
+
+    // Collapse toggle
+    if (collapseBtn) {
+      collapseBtn.addEventListener('click', () => {
+        this.isCollapsed = !this.isCollapsed;
+        this.render();
+        this._bindEvents();
+      });
+    }
 
     // Play / Pause Toggle
     playBtn.addEventListener('click', () => {

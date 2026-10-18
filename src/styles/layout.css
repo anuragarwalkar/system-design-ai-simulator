@@ -9,8 +9,10 @@
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--bg-app);
+  position: relative;
 }
 
 /* TOP TOOLBAR */
@@ -24,6 +26,7 @@
   justify-content: space-between;
   padding: 0 16px;
   z-index: 20;
+  transition: all 0.2s ease;
 }
 
 /* MAIN WORKSPACE SHELL */
@@ -32,6 +35,7 @@
   flex: 1;
   width: 100%;
   height: calc(100vh - 56px);
+  height: calc(100dvh - 56px);
   position: relative;
   overflow: hidden;
 }
@@ -49,13 +53,15 @@
   overflow-x: hidden;
   padding: 18px 14px;
   gap: 16px;
-  z-index: 10;
+  z-index: 25;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
 }
 
 /* CANVAS VIEWPORT */
 .canvas-container {
   flex: 1;
   height: 100%;
+  width: 100%;
   position: relative;
   overflow: hidden;
   background-color: var(--bg-canvas);
@@ -68,6 +74,8 @@
   width: 100%;
   height: 100%;
   display: block;
+  touch-action: none; /* Prevents default browser scroll & zoom gestures on canvas */
+  user-select: none;
 }
 
 /* RIGHT INSPECTOR PANEL */
@@ -80,8 +88,8 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  z-index: 10;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 25;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
 }
 
 /* FLOATING HUD ELEMENTS INSIDE CANVAS */
@@ -92,6 +100,7 @@
   transform: translateX(-50%);
   z-index: 15;
   pointer-events: none; /* Let clicks pass to canvas if outside items */
+  transition: all 0.25s ease;
 }
 
 .floating-load-hud {
@@ -99,6 +108,7 @@
   bottom: 24px;
   right: 24px;
   z-index: 15;
+  transition: all 0.25s ease;
 }
 
 /* BRANDING */
@@ -106,6 +116,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  user-select: none;
 }
 
 .brand-logo {
@@ -119,6 +130,7 @@
   color: #FFFFFF;
   font-size: 16px;
   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+  flex-shrink: 0;
 }
 
 .brand-text {
@@ -132,6 +144,7 @@
   font-size: 16px;
   letter-spacing: -0.02em;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .brand-badge {
@@ -143,4 +156,174 @@
   border-radius: var(--radius-sm);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* MOBILE BACKDROP OVERLAYS */
+.mobile-drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 55;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.mobile-drawer-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* MOBILE BOTTOM NAVIGATION BAR */
+.mobile-bottom-nav {
+  display: none; /* Hidden on desktop */
+}
+
+/* ==============================================================================
+ * Responsive Media Queries for Tablets & Mobile Phones (<= 900px)
+ * ==============================================================================
+ */
+@media (max-width: 900px) {
+  .app-header {
+    height: 52px;
+    min-height: 52px;
+    padding: 0 10px;
+  }
+
+  .brand-badge {
+    display: none; /* Hide decorative badge on narrow screens */
+  }
+
+  .brand-title {
+    font-size: 15px;
+  }
+
+  /* Full-width canvas workspace with space for bottom nav bar */
+  .app-workspace {
+    height: calc(100vh - 52px - 58px);
+    height: calc(100dvh - 52px - 58px);
+    width: 100vw;
+  }
+
+  /* Left Sidebar becomes a slide-out off-canvas drawer */
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(320px, 86vw);
+    min-width: 0;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 60;
+    transform: translateX(-100%);
+    box-shadow: none;
+    border-right: 1px solid var(--border-medium);
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Right Inspector becomes an off-canvas drawer */
+  .app-inspector {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(340px, 90vw);
+    min-width: 0;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 60;
+    transform: translateX(100%);
+    box-shadow: none;
+    border-left: 1px solid var(--border-medium);
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .app-inspector.mobile-open {
+    transform: translateX(0);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Backdrops are active on mobile */
+  .mobile-drawer-backdrop {
+    display: block;
+  }
+
+  /* Mobile Bottom Navigation Dock */
+  .mobile-bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 58px;
+    background-color: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+    z-index: 45;
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Reposition floating HUDs on mobile */
+  .floating-metrics-hud {
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 16px);
+    max-width: 440px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .floating-metrics-hud.mobile-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-12px);
+  }
+
+  .floating-load-hud {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: calc(100vw - 20px);
+    margin: 0 auto;
+  }
+
+  .floating-load-hud.mobile-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(16px);
+  }
+}
+
+/* Extra small mobile adjustments (<= 480px) */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0 8px;
+  }
+
+  .brand-logo {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .brand-title {
+    font-size: 14px;
+  }
 }

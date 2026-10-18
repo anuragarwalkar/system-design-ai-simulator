@@ -62,7 +62,7 @@ export class Toolbar {
         <!-- Live Resilience Score Pill -->
         <button id="btn-toggle-eval" class="eval-score-pill" title="View Real-Time SPOF & Architecture Analysis">
           <span class="score-indicator-dot" id="score-dot"></span>
-          <span>Health Score:</span>
+          <span>Health:</span>
           <strong id="toolbar-score-val">100%</strong>
         </button>
 
@@ -84,6 +84,29 @@ export class Toolbar {
             ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`
             : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`}
         </button>
+
+        <!-- More Actions Menu Button (Mobile & Narrow Screens) -->
+        <button id="btn-mobile-more" class="theme-toggle-btn" title="More Options">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        </button>
+
+        <!-- Mobile More Menu Popover -->
+        <div id="mobile-more-popover" class="mobile-menu-popover">
+          <button id="menu-opt-theme" class="mobile-menu-item">
+            ${isDark ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
+          </button>
+          <button id="menu-opt-export" class="mobile-menu-item">
+            💾 Save Architecture JSON
+          </button>
+          <label class="mobile-menu-item" style="cursor: pointer;">
+            📂 Load Architecture JSON
+            <input type="file" id="input-import-json-mobile" accept=".json" style="display: none;">
+          </label>
+          <div class="mobile-menu-divider"></div>
+          <button id="menu-opt-reset" class="mobile-menu-item danger">
+            🗑️ Reset Canvas
+          </button>
+        </div>
 
         <!-- AI Assistant Toggle Button -->
         <button id="btn-toggle-ai" class="btn-ai-sparkle" title="Toggle AI Architect (LangChain)">
@@ -174,6 +197,65 @@ export class Toolbar {
       };
       reader.readAsText(file);
     });
+
+    // Mobile More Menu Popover Toggle
+    const moreBtn = this.container.querySelector('#btn-mobile-more');
+    const popover = this.container.querySelector('#mobile-more-popover');
+    if (moreBtn && popover) {
+      moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popover.classList.toggle('open');
+      });
+
+      // Close popover when clicking outside
+      window.addEventListener('click', (e) => {
+        if (!popover.contains(e.target) && e.target !== moreBtn) {
+          popover.classList.remove('open');
+        }
+      });
+
+      // Menu Theme
+      this.container.querySelector('#menu-opt-theme').addEventListener('click', () => {
+        popover.classList.remove('open');
+        stateManager.toggleTheme();
+        this.render();
+        this._bindEvents();
+      });
+
+      // Menu Export
+      this.container.querySelector('#menu-opt-export').addEventListener('click', () => {
+        popover.classList.remove('open');
+        this.container.querySelector('#btn-export-json').click();
+      });
+
+      // Menu Import
+      const mobileImportInput = this.container.querySelector('#input-import-json-mobile');
+      if (mobileImportInput) {
+        mobileImportInput.addEventListener('change', (e) => {
+          popover.classList.remove('open');
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const parsed = JSON.parse(event.target.result);
+              stateManager.loadGraph(parsed);
+              if (parsed.targetRps) stateManager.updateSimConfig({ target_rps: parsed.targetRps });
+              showToast('Architecture loaded successfully', 'success');
+            } catch (err) {
+              showToast('Failed to load JSON: ' + err.message, 'error');
+            }
+          };
+          reader.readAsText(file);
+        });
+      }
+
+      // Menu Reset
+      this.container.querySelector('#menu-opt-reset').addEventListener('click', () => {
+        popover.classList.remove('open');
+        this.container.querySelector('#btn-reset').click();
+      });
+    }
 
     // Listen to analysis updates to update Health Score pill
     eventBus.on(EVENTS.ANALYSIS_UPDATED, (report) => {

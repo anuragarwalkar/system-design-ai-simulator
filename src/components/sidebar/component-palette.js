@@ -2,30 +2,38 @@
  * ==============================================================================
  * Component Palette & Scenarios Sidebar
  * ==============================================================================
- * Displays draggable infrastructure components with icon badges and metadata,
- * alongside sorted interview practice scenarios.
+ * Displays draggable & tappable infrastructure components with icon badges,
+ * alongside sorted interview practice scenarios. Fully optimized for touch & mobile.
  */
 
 import { COMPONENT_METADATA } from '../../core/constants.js';
 import { SCENARIOS } from '../../ai/scenarios.js';
 import { stateManager } from '../../core/state-manager.js';
+import { historyManager } from '../../core/history-manager.js';
+import { showToast } from '../ui/dialog.js';
 
 export class ComponentPalette {
-  constructor(containerElement) {
+  constructor(containerElement, canvasRenderer) {
     this.container = containerElement;
+    this.renderer = canvasRenderer;
     this.render();
   }
 
   render() {
     this.container.innerHTML = `
       <div class="palette-header">
-        <h2 class="palette-title">Components</h2>
-        <p class="palette-subtitle">Drag and drop to add to your system</p>
+        <div class="palette-header-row">
+          <div>
+            <h2 class="palette-title">Components</h2>
+            <p class="palette-subtitle">Tap or drag to add to system</p>
+          </div>
+          <button id="btn-close-sidebar" class="btn-close-sidebar" title="Close Components">✕</button>
+        </div>
       </div>
 
       <div class="component-list" id="component-list">
         ${Object.entries(COMPONENT_METADATA).map(([type, meta]) => `
-          <div class="component-card" draggable="true" data-type="${type}">
+          <div class="component-card" draggable="true" data-type="${type}" role="button" tabindex="0" title="Tap to add ${meta.name} to canvas">
             <div class="component-icon-badge" style="background: ${meta.accentBg}; color: ${meta.color};">
               <span class="component-dot" style="background: ${meta.color};"></span>
             </div>
@@ -40,14 +48,13 @@ export class ComponentPalette {
       <div class="palette-section-divider"></div>
 
       <div class="palette-instructions">
-        <h3 class="section-title">Canvas Shortcuts</h3>
+        <h3 class="section-title">Canvas Gestures</h3>
         <ul class="shortcut-list">
-          <li><span>Drag wire</span> Connect ports</li>
-          <li><span>Click edge</span> Select / Inspect</li>
-          <li><span>Del / Backspace</span> Remove item</li>
+          <li><span>Tap / Click</span> Select component</li>
+          <li><span>Drag / Touch</span> Move node or pan</li>
+          <li><span>Pinch / Wheel</span> Zoom in/out</li>
+          <li><span>Port Touch</span> Wire connection</li>
           <li><span>Cmd / Ctrl + Z</span> Undo action</li>
-          <li><span>Space + Drag</span> Pan canvas</li>
-          <li><span>Wheel</span> Zoom in/out</li>
         </ul>
       </div>
 
@@ -81,13 +88,29 @@ export class ComponentPalette {
       </div>
     `;
 
-    this._bindDragEvents();
+    this._bindCloseButton();
+    this._bindDragAndClickEvents();
     this._bindScenarioEvents();
   }
 
-  _bindDragEvents() {
+  _bindCloseButton() {
+    const closeBtn = this.container.querySelector('#btn-close-sidebar');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.closeMobileSidebar());
+    }
+  }
+
+  closeMobileSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+  }
+
+  _bindDragAndClickEvents() {
     const cards = this.container.querySelectorAll('.component-card');
     cards.forEach(card => {
+      // HTML5 Drag for desktop
       card.addEventListener('dragstart', (e) => {
         const type = card.getAttribute('data-type');
         e.dataTransfer.setData('text/plain', type);
@@ -98,7 +121,55 @@ export class ComponentPalette {
       card.addEventListener('dragend', () => {
         card.classList.remove('dragging');
       });
+
+      // Tap-to-add for mobile & convenience on desktop
+      card.addEventListener('click', () => {
+        const type = card.getAttribute('data-type');
+        this.addNodeToCanvas(type);
+      });
     });
+  }
+
+  addNodeToCanvas(componentType) {
+    const meta = COMPONENT_METADATA[componentType];
+    const snap = 40;
+
+    // Place near current camera viewport center with gentle randomized offset
+    let targetX = 0;
+    let targetY = 0;
+
+    if (this.renderer && this.renderer.camera) {
+      const jitterX = (Math.random() - 0.5) * 80;
+      const jitterY = (Math.random() - 0.5) * 80;
+      targetX = Math.round((this.renderer.camera.x - 70 + jitterX) / snap) * snap;
+      targetY = Math.round((this.renderer.camera.y - 45 + jitterY) / snap) * snap;
+    }
+
+    const nodeSpec = {
+      component_type: componentType,
+      x: targetX,
+      y: targetY
+    };
+
+    let createdNodeId = null;
+    historyManager.execute({
+      description: `Add ${meta ? meta.name : componentType}`,
+      execute: () => {
+        const n = stateManager.addNode(nodeSpec);
+        createdNodeId = n.id;
+        stateManager.selectNode(n.id);
+      },
+      undo: () => {
+        if (createdNodeId) stateManager.removeNode(createdNodeId);
+      }
+    });
+
+    showToast(`Added ${meta ? meta.name : componentType} to canvas`, 'success', 2000);
+
+    // On mobile devices, dismiss sidebar after tapping so canvas is visible
+    if (window.innerWidth <= 900) {
+      this.closeMobileSidebar();
+    }
   }
 
   _bindScenarioEvents() {
@@ -110,8 +181,22 @@ export class ComponentPalette {
         if (scenario) {
           stateManager.loadGraph(scenario.graph);
           stateManager.updateSimConfig({ target_rps: scenario.targetRps });
+
+          if (this.renderer && this.renderer.camera) {
+            setTimeout(() => {
+              this.renderer.camera.fitToContent(stateManager.nodes);
+            }, 100);
+          }
+
+          showToast(`Loaded scenario: ${scenario.title}`, 'info');
+
+          // Close sidebar on mobile
+          if (window.innerWidth <= 900) {
+            this.closeMobileSidebar();
+          }
         }
       });
     });
   }
 }
+

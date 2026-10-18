@@ -2,8 +2,9 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="description" content="High-Performance 60FPS System Design Simulator powered by WebAssembly, HTML5 Canvas, and AI LangChain" />
+  <meta name="theme-color" content="#0D0F17" />
   <title>SysDesign AI Simulator — Interactive 60FPS WebAssembly Simulator</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -41,6 +42,13 @@
       <!-- Right Sidebar: Selected Node Inspector -->
       <aside class="app-inspector" id="app-inspector"></aside>
     </main>
+
+    <!-- Mobile Drawer Backdrops -->
+    <div class="mobile-drawer-backdrop" id="sidebar-backdrop"></div>
+    <div class="mobile-drawer-backdrop" id="inspector-backdrop"></div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav" id="mobile-nav"></nav>
 
     <!-- Slide-over Panels -->
     <div id="ai-panel-container"></div>

@@ -17,6 +17,7 @@ import { ConnectionHandler } from './interaction/connection.js';
 import { KeyboardHandler } from './interaction/keyboard.js';
 
 import { Toolbar } from './components/toolbar/toolbar.js';
+import { MobileNav } from './components/toolbar/mobile-nav.js';
 import { ComponentPalette } from './components/sidebar/component-palette.js';
 import { ConfigPanel } from './components/config-panel/config-panel.js';
 import { MetricsDashboard } from './components/simulation/metrics-dashboard.js';
@@ -46,7 +47,7 @@ async function bootstrap() {
   new Toolbar(headerContainer, renderer);
 
   const sidebarContainer = document.getElementById('app-sidebar');
-  new ComponentPalette(sidebarContainer);
+  new ComponentPalette(sidebarContainer, renderer);
 
   const inspectorContainer = document.getElementById('app-inspector');
   new ConfigPanel(inspectorContainer);
@@ -62,6 +63,11 @@ async function bootstrap() {
 
   const evalPanelContainer = document.getElementById('eval-panel-container');
   new ArchitectureEvaluationPanel(evalPanelContainer);
+
+  const mobileNavContainer = document.getElementById('mobile-nav');
+  if (mobileNavContainer) {
+    new MobileNav(mobileNavContainer);
+  }
 
   // 5. Load Initial Starter Scenario (URL Shortener - Bitly)
   const starterScenario = SCENARIOS[0];

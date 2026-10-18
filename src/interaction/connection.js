@@ -31,6 +31,11 @@ export class ConnectionHandler {
     this.canvas.addEventListener('mousedown', (e) => this._onMouseDown(e));
     window.addEventListener('mouseup', (e) => this._onMouseUp(e));
 
+    // Touch support for mobile wiring
+    this.canvas.addEventListener('touchstart', (e) => this._onTouchStart(e), { passive: false });
+    window.addEventListener('touchmove', (e) => this._onTouchMove(e), { passive: false });
+    window.addEventListener('touchend', (e) => this._onTouchEnd(e), { passive: false });
+
     // Cancel wire on Escape key or right click
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.activeWire) {
@@ -44,6 +49,88 @@ export class ConnectionHandler {
         this._cancelWire();
       }
     });
+  }
+
+  _onTouchStart(e) {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const world = this.camera.screenToWorld(touch.clientX, touch.clientY);
+
+    // If already stretching wire in tap-to-connect mode
+    if (this.activeWire) {
+      e.preventDefault();
+      const target = this._findTargetNodeOrPortNear(world.x, world.y);
+      if (target && target.node.id !== this.activeWire.sourceNodeId) {
+        this._completeConnection(this.activeWire.sourceNodeId, target.node.id);
+      } else {
+        this._cancelWire();
+      }
+      return;
+    }
+
+    // Check if touching near any port (generous 28px hit radius)
+    const port = this._findPortNear(world.x, world.y, 28);
+    if (port) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.activeWire = {
+        startX: port.x,
+        startY: port.y,
+        currentX: port.x,
+        currentY: port.y,
+        sourceNodeId: port.nodeId,
+        sourceSide: port.side,
+        startScreenX: touch.clientX,
+        startScreenY: touch.clientY,
+        dragged: false
+      };
+      this.renderer.connectingWire = this.activeWire;
+    }
+  }
+
+  _onTouchMove(e) {
+    if (!this.activeWire || e.touches.length !== 1) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const world = this.camera.screenToWorld(touch.clientX, touch.clientY);
+
+    const screenDist = Math.hypot(
+      touch.clientX - this.activeWire.startScreenX,
+      touch.clientY - this.activeWire.startScreenY
+    );
+    if (screenDist > 10) {
+      this.activeWire.dragged = true;
+    }
+
+    const target = this._findTargetNodeOrPortNear(world.x, world.y);
+    if (target && target.node.id !== this.activeWire.sourceNodeId) {
+      this.renderer.hoveredTargetNodeId = target.node.id;
+      if (target.port) {
+        this.activeWire.currentX = target.port.x;
+        this.activeWire.currentY = target.port.y;
+      } else {
+        this.activeWire.currentX = world.x;
+        this.activeWire.currentY = world.y;
+      }
+    } else {
+      this.renderer.hoveredTargetNodeId = null;
+      this.activeWire.currentX = world.x;
+      this.activeWire.currentY = world.y;
+    }
+    this.renderer.connectingWire = this.activeWire;
+  }
+
+  _onTouchEnd(e) {
+    if (!this.activeWire) return;
+    if (this.activeWire.dragged) {
+      // Released after dragging: check if over target
+      if (this.renderer.hoveredTargetNodeId && this.renderer.hoveredTargetNodeId !== this.activeWire.sourceNodeId) {
+        this._completeConnection(this.activeWire.sourceNodeId, this.renderer.hoveredTargetNodeId);
+      } else {
+        this._cancelWire();
+      }
+    }
+    // If not dragged (quick tap), wire stays active for tap-to-connect!
   }
 
   _onMouseMove(e) {

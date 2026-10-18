@@ -25,6 +25,15 @@ export class DragDropEngine {
 
     this.isSpacePanning = false;
 
+    // Mobile touch interaction states
+    this.touchMode = null; // 'pan' | 'drag-node' | 'pinch'
+    this.touchStartClientX = 0;
+    this.touchStartClientY = 0;
+    this.touchMoved = false;
+    this.lastPinchDist = 0;
+    this.lastPinchMidX = 0;
+    this.lastPinchMidY = 0;
+
     this._bindEvents();
   }
 
@@ -48,6 +57,12 @@ export class DragDropEngine {
     });
 
     this.canvas.addEventListener('drop', (e) => this._onPaletteDrop(e));
+
+    // 6. Mobile Touch gestures (Touch Pan, Drag Node, Pinch-to-Zoom)
+    this.canvas.addEventListener('touchstart', (e) => this._onTouchStart(e), { passive: false });
+    window.addEventListener('touchmove', (e) => this._onTouchMove(e), { passive: false });
+    window.addEventListener('touchend', (e) => this._onTouchEnd(e), { passive: false });
+    window.addEventListener('touchcancel', (e) => this._onTouchCancel(e), { passive: false });
   }
 
   _onMouseDown(e) {
@@ -155,6 +170,175 @@ export class DragDropEngine {
     e.preventDefault();
     const zoomFactor = -e.deltaY * CANVAS_CONFIG.ZOOM_SPEED;
     this.camera.zoomAt(zoomFactor, e.clientX, e.clientY);
+  }
+
+  /* TOUCH GESTURE HANDLERS (Mobile Pan, Node Drag, Pinch-to-Zoom) */
+  _onTouchStart(e) {
+    // If a connection wire is active or user is touching near a port, allow ConnectionHandler priority
+    if (this.renderer.connectingWire) return;
+
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const world = this.camera.screenToWorld(touch.clientX, touch.clientY);
+
+      // If near port, don't drag node or pan — connection handler will handle
+      if (this._findPortNear(world.x, world.y, 26)) {
+        return;
+      }
+
+      this.touchStartClientX = touch.clientX;
+      this.touchStartClientY = touch.clientY;
+      this.touchMoved = false;
+
+      const clickedNode = this._findNodeAt(world.x, world.y);
+
+      if (clickedNode) {
+        this.touchMode = 'drag-node';
+        this.draggedNode = clickedNode;
+        this.dragStartWorldX = world.x;
+        this.dragStartWorldY = world.y;
+        this.initialNodeX = clickedNode.x;
+        this.initialNodeY = clickedNode.y;
+        this.hasMoved = false;
+      } else {
+        this.touchMode = 'pan';
+        this.camera.isPanning = true;
+        this.camera.lastPanX = touch.clientX;
+        this.camera.lastPanY = touch.clientY;
+      }
+    } else if (e.touches.length === 2) {
+      // 2-finger touch: Pinch-to-Zoom & Two-finger Pan
+      e.preventDefault();
+      this.touchMode = 'pinch';
+      this.camera.isPanning = false;
+      this.draggedNode = null;
+
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      this.lastPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      this.lastPinchMidX = (t1.clientX + t2.clientX) / 2;
+      this.lastPinchMidY = (t1.clientY + t2.clientY) / 2;
+    }
+  }
+
+  _onTouchMove(e) {
+    if (this.touchMode === 'pinch' && e.touches.length >= 2) {
+      e.preventDefault();
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+
+      const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      const midX = (t1.clientX + t2.clientX) / 2;
+      const midY = (t1.clientY + t2.clientY) / 2;
+
+      if (this.lastPinchDist > 0) {
+        const deltaDist = currentDist - this.lastPinchDist;
+        const zoomDelta = deltaDist / 200;
+        this.camera.zoomAt(zoomDelta, midX, midY);
+
+        // Also pan with pinch movement
+        const panDx = midX - this.lastPinchMidX;
+        const panDy = midY - this.lastPinchMidY;
+        this.camera.pan(panDx, panDy);
+      }
+
+      this.lastPinchDist = currentDist;
+      this.lastPinchMidX = midX;
+      this.lastPinchMidY = midY;
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const moveDist = Math.hypot(
+        touch.clientX - this.touchStartClientX,
+        touch.clientY - this.touchStartClientY
+      );
+      if (moveDist > 6) {
+        this.touchMoved = true;
+      }
+
+      if (this.touchMode === 'pan' && this.camera.isPanning) {
+        e.preventDefault();
+        const dx = touch.clientX - this.camera.lastPanX;
+        const dy = touch.clientY - this.camera.lastPanY;
+        this.camera.pan(dx, dy);
+        this.camera.lastPanX = touch.clientX;
+        this.camera.lastPanY = touch.clientY;
+        return;
+      }
+
+      if (this.touchMode === 'drag-node' && this.draggedNode) {
+        e.preventDefault();
+        const world = this.camera.screenToWorld(touch.clientX, touch.clientY);
+        const deltaX = world.x - this.dragStartWorldX;
+        const deltaY = world.y - this.dragStartWorldY;
+
+        if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+          this.hasMoved = true;
+        }
+
+        const rawX = this.initialNodeX + deltaX;
+        const rawY = this.initialNodeY + deltaY;
+        const snap = CANVAS_CONFIG.GRID_SPACING;
+        const snappedX = Math.round(rawX / snap) * snap;
+        const snappedY = Math.round(rawY / snap) * snap;
+
+        stateManager.updateNodePosition(this.draggedNode.id, snappedX, snappedY);
+      }
+    }
+  }
+
+  _onTouchEnd(e) {
+    if (this.touchMode === 'drag-node' && this.draggedNode) {
+      const node = this.draggedNode;
+      const nodeId = node.id;
+      const fromX = this.initialNodeX;
+      const fromY = this.initialNodeY;
+      const toX = node.x;
+      const toY = node.y;
+
+      if (this.hasMoved && (fromX !== toX || fromY !== toY)) {
+        historyManager.execute({
+          description: `Move node ${node.name}`,
+          execute: () => stateManager.updateNodePosition(nodeId, toX, toY),
+          undo: () => stateManager.updateNodePosition(nodeId, fromX, fromY)
+        });
+      }
+
+      // Tap on node (little or no movement) selects the node
+      if (!this.touchMoved) {
+        stateManager.selectNode(nodeId);
+      }
+
+      this.draggedNode = null;
+      this.hasMoved = false;
+    } else if (this.touchMode === 'pan') {
+      this.camera.isPanning = false;
+
+      // Tap on empty canvas or edge
+      if (!this.touchMoved) {
+        const world = this.camera.screenToWorld(this.touchStartClientX, this.touchStartClientY);
+        const edge = this._findEdgeAt(world.x, world.y);
+        if (edge) {
+          stateManager.selectEdge(edge.id);
+        } else {
+          stateManager.clearSelection();
+        }
+      }
+    }
+
+    this.touchMode = null;
+    this.touchMoved = false;
+    this.lastPinchDist = 0;
+  }
+
+  _onTouchCancel() {
+    this.camera.isPanning = false;
+    this.draggedNode = null;
+    this.touchMode = null;
+    this.touchMoved = false;
+    this.lastPinchDist = 0;
   }
 
   _onPaletteDrop(e) {

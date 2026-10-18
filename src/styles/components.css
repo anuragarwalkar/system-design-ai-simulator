@@ -641,6 +641,7 @@
   gap: 8px;
   z-index: 110;
   pointer-events: none;
+  max-width: 90vw;
 }
 
 .toast-item {
@@ -677,4 +678,352 @@
 .toast-icon {
   font-size: 14px;
 }
+
+/* ==============================================================================
+ * Mobile Bottom Navigation Dock & Mobile UI Controls
+ * ==============================================================================
+ */
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+.mobile-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+  padding: 6px 2px;
+  color: var(--text-muted);
+  position: relative;
+  transition: all 0.15s ease;
+  user-select: none;
+  background: transparent;
+  border: none;
+}
+
+.mobile-nav-btn:active {
+  transform: scale(0.92);
+}
+
+.mobile-nav-btn.active {
+  color: var(--accent-primary);
+}
+
+.mobile-nav-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-nav-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.mobile-nav-badge {
+  position: absolute;
+  top: 6px;
+  right: calc(50% - 14px);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-success);
+  border: 1.5px solid var(--bg-surface);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  display: none;
+}
+
+.mobile-nav-badge.active {
+  display: block;
+}
+
+/* Sidebar Drawer Header on Mobile */
+.palette-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.btn-close-sidebar {
+  display: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.btn-close-sidebar:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+/* Mobile Quick Menu Dropdown Popover */
+.mobile-menu-popover {
+  position: fixed;
+  top: 56px;
+  right: 12px;
+  width: 220px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+  pointer-events: none;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-menu-popover.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.mobile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  width: 100%;
+}
+
+.mobile-menu-item:hover, .mobile-menu-item:active {
+  background-color: var(--bg-surface-alt);
+}
+
+.mobile-menu-item.danger {
+  color: var(--color-danger);
+}
+
+.mobile-menu-divider {
+  height: 1px;
+  background-color: var(--border-subtle);
+  margin: 4px 6px;
+}
+
+/* Load Card Collapsible Header Button */
+.load-card-header {
+  position: relative;
+}
+
+.btn-load-toggle-collapse {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.btn-load-toggle-collapse:hover {
+  background-color: var(--bg-surface-alt);
+  color: var(--text-primary);
+}
+
+.load-card.collapsed .load-controls-row,
+.load-card.collapsed .load-profiles-row {
+  display: none !important;
+}
+
+.load-card.collapsed {
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+}
+
+.load-card-min-stats {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.load-card.collapsed .load-card-min-stats {
+  display: block;
+}
+
+/* ==============================================================================
+ * Responsive Breakpoint Media Queries (<= 900px)
+ * ==============================================================================
+ */
+@media (max-width: 900px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  .btn-close-sidebar {
+    display: flex;
+  }
+
+  /* Header toolbar compactness */
+  .toolbar-left, .toolbar-right {
+    gap: 4px;
+  }
+
+  .toolbar-divider {
+    display: none;
+  }
+
+  .btn-group {
+    padding: 1px;
+    gap: 1px;
+  }
+
+  /* Hide button labels on smaller screens to keep header sleek */
+  .toolbar-btn span {
+    display: none;
+  }
+
+  .toolbar-btn {
+    padding: 6px 8px;
+  }
+
+  /* Compact score pill */
+  .eval-score-pill {
+    padding: 5px 9px;
+    font-size: 11px;
+  }
+
+  .eval-score-pill span:not(#toolbar-score-val):not(.score-indicator-dot) {
+    display: none;
+  }
+
+  /* AI button on header can be icon only on mobile */
+  .btn-ai-sparkle {
+    padding: 6px 10px;
+  }
+
+  .btn-ai-sparkle span:not(.ai-sparkle-icon) {
+    display: none;
+  }
+
+  /* Metrics HUD horizontal scrolling pill */
+  .metrics-bar {
+    padding: 5px 12px;
+    gap: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .metrics-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .metric-label {
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+  .metric-value {
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .metric-divider {
+    height: 16px;
+  }
+
+  /* Toast notification above bottom nav */
+  .toast-container {
+    bottom: 70px;
+    max-width: calc(100vw - 32px);
+  }
+
+  /* Component palette card mobile touch ergonomics */
+  .component-card {
+    padding: 12px 14px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .component-name {
+    font-size: 14px;
+  }
+
+  .component-desc {
+    font-size: 11.5px;
+  }
+
+  /* Touch-friendly inputs in Inspector */
+  .form-select, .form-input {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .form-range {
+    height: 32px;
+  }
+
+  .btn-delete-component {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  /* Full screen AI & Evaluation drawers on mobile */
+  .ai-drawer, .eval-drawer {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+
+  .ai-prompt-field {
+    font-size: 16px; /* Prevents iOS auto-zoom on input focus */
+  }
+
+  /* Modal responsiveness */
+  .custom-modal-card {
+    width: calc(100vw - 24px);
+    max-width: 380px;
+    padding: 20px 18px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-btn {
+    width: 100%;
+    padding: 11px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Hide desktop save/load in header on very small screens; accessed via menu or bottom nav */
+  #btn-export-json,
+  label[title="Import Architecture JSON"] {
+    display: none;
+  }
+}
+
 
