@@ -24,6 +24,8 @@ import { MetricsDashboard } from './components/simulation/metrics-dashboard.js';
 import { LoadInjector } from './components/simulation/load-injector.js';
 import { AiChatPanel } from './components/ai/ai-chat.js';
 import { ArchitectureEvaluationPanel } from './components/ai/ai-evaluation.js';
+import { OnboardingTutorial } from './components/ui/onboarding.js';
+import { showToast } from './components/ui/dialog.js';
 
 async function bootstrap() {
   console.log('[App] Bootstrapping System Design AI Simulator...');
@@ -68,10 +70,26 @@ async function bootstrap() {
     new MobileNav(mobileNavContainer);
   }
 
-  // 5. Start with a clean empty canvas by default
-  renderer.camera.reset();
+  // 5. Initialize Beginner Onboarding Tutorial
+  const onboarding = new OnboardingTutorial(renderer);
+  window.appOnboarding = onboarding;
 
-  console.log('[App] System Design AI Simulator successfully running at 60FPS with clean canvas.');
+  // 6. Restore previous architecture or show clean canvas / onboarding
+  const restored = stateManager.restoreFromLocalStorage();
+  if (restored) {
+    setTimeout(() => {
+      renderer.camera.fitToContent(stateManager.nodes);
+    }, 120);
+    showToast('Restored your previous architecture', 'info', 3000);
+  } else {
+    renderer.camera.reset();
+    // Launch onboarding for first-time visitors
+    setTimeout(() => {
+      onboarding.show();
+    }, 400);
+  }
+
+  console.log('[App] System Design AI Simulator successfully running at 60FPS.');
 }
 
 window.addEventListener('DOMContentLoaded', bootstrap);

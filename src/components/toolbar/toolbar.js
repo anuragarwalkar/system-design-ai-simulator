@@ -65,6 +65,12 @@ export class Toolbar {
           <strong id="toolbar-score-val">100%</strong>
         </button>
 
+        <!-- Beginner Tutorial Button -->
+        <button id="btn-tutorial" class="toolbar-btn btn-tutorial" title="Open Beginner System Design Tutorial">
+          <span>🎓</span>
+          <span>Tutorial</span>
+        </button>
+
         <div class="btn-group">
           <button id="btn-export-json" class="toolbar-btn" title="Export Architecture JSON">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -91,6 +97,9 @@ export class Toolbar {
 
         <!-- Mobile More Menu Popover -->
         <div id="mobile-more-popover" class="mobile-menu-popover">
+          <button id="menu-opt-tutorial" class="mobile-menu-item">
+            🎓 System Design Tutorial
+          </button>
           <button id="menu-opt-theme" class="mobile-menu-item">
             ${isDark ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
           </button>
@@ -148,6 +157,16 @@ export class Toolbar {
       this.render();
       this._bindEvents();
     });
+
+    // Tutorial Walkthrough
+    const tutBtn = this.container.querySelector('#btn-tutorial');
+    if (tutBtn) {
+      tutBtn.addEventListener('click', () => {
+        if (window.appOnboarding) {
+          window.appOnboarding.show(true);
+        }
+      });
+    }
 
     // AI Drawer Toggle
     this.container.querySelector('#btn-toggle-ai').addEventListener('click', () => {
@@ -212,6 +231,17 @@ export class Toolbar {
           popover.classList.remove('open');
         }
       });
+
+      // Menu Tutorial
+      const mobTutBtn = this.container.querySelector('#menu-opt-tutorial');
+      if (mobTutBtn) {
+        mobTutBtn.addEventListener('click', () => {
+          popover.classList.remove('open');
+          if (window.appOnboarding) {
+            window.appOnboarding.show(true);
+          }
+        });
+      }
 
       // Menu Theme
       this.container.querySelector('#menu-opt-theme').addEventListener('click', () => {

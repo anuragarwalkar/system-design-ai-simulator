@@ -50,7 +50,7 @@ export class EdgeRenderer {
       const midX = Math.pow(1 - midT, 3) * startX + 3 * Math.pow(1 - midT, 2) * midT * cp1X + 3 * (1 - midT) * Math.pow(midT, 2) * cp2X + Math.pow(midT, 3) * endX;
       const midY = Math.pow(1 - midT, 3) * startY + 3 * Math.pow(1 - midT, 2) * midT * cp1Y + 3 * (1 - midT) * Math.pow(midT, 2) * cp2Y + Math.pow(midT, 3) * endY;
 
-      this._renderProtocolBadge(ctx, midX, midY, edge.protocol, isDark);
+      this._renderProtocolBadge(ctx, midX, midY, edge.protocol, isDark, isSelected);
     }
 
     ctx.restore();
@@ -203,27 +203,63 @@ export class EdgeRenderer {
     ctx.restore();
   }
 
-  _renderProtocolBadge(ctx, x, y, protocol, isDark) {
+  _renderProtocolBadge(ctx, x, y, protocol, isDark, isSelected = false) {
     ctx.save();
-    ctx.font = '500 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '600 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     const textWidth = ctx.measureText(protocol).width;
-    const paddingX = 6;
-    const pillWidth = textWidth + paddingX * 2;
-    const pillHeight = 16;
+    const dotRadius = 2.5;
+    const dotMargin = 4;
+    const paddingX = 8;
+    const pillWidth = textWidth + dotRadius * 2 + dotMargin + paddingX * 2;
+    const pillHeight = 18;
 
+    // Protocol color accents
+    let dotColor = '#3B82F6'; // Default HTTP
+    if (protocol.includes('gRPC')) dotColor = '#8B5CF6'; // Purple
+    else if (protocol.includes('Redis')) dotColor = '#EF4444'; // Red
+    else if (protocol.includes('Kafka') || protocol.includes('AMQP')) dotColor = '#F97316'; // Orange
+    else if (protocol.includes('Postgres') || protocol.includes('SQL')) dotColor = '#EC4899'; // Pink
+    else if (protocol.includes('WebSocket')) dotColor = '#06B6D4'; // Cyan
+    else if (protocol.includes('HTTP/2')) dotColor = '#10B981'; // Green
+
+    // Pill background
     ctx.beginPath();
-    ctx.roundRect(x - pillWidth / 2, y - pillHeight / 2, pillWidth, pillHeight, 8);
-    ctx.fillStyle = isDark ? '#1E2235' : '#FFFFFF';
+    ctx.roundRect(x - pillWidth / 2, y - pillHeight / 2, pillWidth, pillHeight, 9);
+    ctx.fillStyle = isSelected
+      ? (isDark ? '#232946' : '#EEF2FF')
+      : (isDark ? '#1A1D2B' : '#FFFFFF');
+
+    if (isSelected) {
+      ctx.shadowColor = '#6366F1';
+      ctx.shadowBlur = 8;
+    }
     ctx.fill();
 
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = isDark ? '#333A52' : '#E2E8F0';
+    // Border
+    ctx.lineWidth = isSelected ? 1.5 : 1;
+    ctx.strokeStyle = isSelected
+      ? '#6366F1'
+      : (isDark ? '#2E354B' : '#E2E8F0');
     ctx.stroke();
 
-    ctx.fillStyle = isDark ? '#94A3B8' : '#64748B';
-    ctx.textAlign = 'center';
+    // Reset shadow
+    ctx.shadowBlur = 0;
+
+    // Protocol status dot
+    const startContentX = x - pillWidth / 2 + paddingX;
+    const dotCenterX = startContentX + dotRadius;
+    ctx.beginPath();
+    ctx.arc(dotCenterX, y, dotRadius, 0, Math.PI * 2);
+    ctx.fillStyle = dotColor;
+    ctx.fill();
+
+    // Text label
+    ctx.fillStyle = isSelected
+      ? '#6366F1'
+      : (isDark ? '#CBD5E1' : '#475569');
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(protocol, x, y);
+    ctx.fillText(protocol, dotCenterX + dotRadius + dotMargin, y);
 
     ctx.restore();
   }

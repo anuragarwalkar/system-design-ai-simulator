@@ -12,12 +12,13 @@
 
 import { stateManager } from '../../core/state-manager.js';
 import { eventBus } from '../../core/event-bus.js';
-import { EVENTS, COMPONENT_METADATA, COMPONENT_TYPES } from '../../core/constants.js';
+import { EVENTS, COMPONENT_METADATA, COMPONENT_TYPES, PROTOCOLS_METADATA } from '../../core/constants.js';
 
 export class ConfigPanel {
   constructor(containerElement) {
     this.container = containerElement;
     this.currentNode = null;
+    this.currentEdge = null;
     this._bindEvents();
     this.renderEmpty();
   }
@@ -26,16 +27,31 @@ export class ConfigPanel {
     eventBus.on(EVENTS.SELECTION_CHANGED, ({ node, edge }) => {
       if (node) {
         this.currentNode = node;
+        this.currentEdge = null;
         this.renderNodeConfig(node);
+        if (window.innerWidth <= 900) {
+          this.openMobileInspector();
+        }
+      } else if (edge) {
+        this.currentNode = null;
+        this.currentEdge = edge;
+        this.renderEdgeConfig(edge);
         if (window.innerWidth <= 900) {
           this.openMobileInspector();
         }
       } else {
         this.currentNode = null;
+        this.currentEdge = null;
         this.renderEmpty();
         if (window.innerWidth <= 900) {
           this.closeMobileInspector();
         }
+      }
+    });
+
+    eventBus.on(EVENTS.EDGE_UPDATED, (edge) => {
+      if (this.currentEdge && this.currentEdge.id === edge.id) {
+        this.renderEdgeConfig(edge);
       }
     });
 
@@ -120,6 +136,34 @@ export class ConfigPanel {
       <!-- Dynamic Form by Component Type -->
       <div class="config-body">
         ${this._renderTypeSpecificForms(node.component_type, config)}
+
+        <!-- Beginner System Design Concept Card -->
+        ${meta.concept ? `
+          <div class="concept-explainer-card">
+            <div class="concept-explainer-header">
+              <span class="concept-icon">💡</span>
+              <span class="concept-heading">Concept Breakdown</span>
+            </div>
+            <div class="concept-analogy">
+              <strong>Analogy:</strong> ${meta.concept.analogy}
+            </div>
+            <div class="concept-body-text">
+              ${meta.concept.whatItDoes}
+            </div>
+            <div class="concept-tradeoff-box">
+              <span class="tradeoff-icon">⚠️</span>
+              <span class="tradeoff-text"><strong>Trade-off:</strong> ${meta.concept.keyTradeoffs}</span>
+            </div>
+            <div class="concept-interview-tip">
+              <strong>🎯 Interview Tip:</strong> ${meta.concept.interviewTip}
+            </div>
+            ${meta.concept.industryExamples ? `
+              <div class="concept-examples">
+                <strong>Real-World:</strong> ${meta.concept.industryExamples}
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
 
         <div class="config-divider"></div>
 
@@ -319,5 +363,136 @@ export class ConfigPanel {
       elLoad.style.color = metric.cpu_utilization > 1.0 ? '#EF4444' : (metric.cpu_utilization > 0.7 ? '#F59E0B' : '#10B981');
     }
     if (elLat) elLat.textContent = `${metric.p50_latency_ms}ms`;
+  }
+
+  renderEdgeConfig(edge) {
+    const fromNode = stateManager.nodes.get(edge.from);
+    const toNode = stateManager.nodes.get(edge.to);
+    const fromMeta = fromNode ? (COMPONENT_METADATA[fromNode.component_type] || {}) : {};
+    const toMeta = toNode ? (COMPONENT_METADATA[toNode.component_type] || {}) : {};
+    const protocolInfo = PROTOCOLS_METADATA[edge.protocol] || {
+      name: edge.protocol,
+      category: 'Network Protocol',
+      latencyMs: edge.latency_overhead_ms || 2.0,
+      description: 'Network communication protocol between nodes.',
+      pros: 'Standard connectivity',
+      cons: 'None specified',
+      bestFor: 'Inter-node communication'
+    };
+
+    const protocolOptions = Object.keys(PROTOCOLS_METADATA);
+
+    this.container.innerHTML = `
+      <div class="config-header">
+        <div class="config-title-row">
+          <div class="component-icon-badge" style="background: rgba(99, 102, 241, 0.15); color: #6366F1;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </div>
+          <div class="config-title-wrap">
+            <span class="node-name-field" style="padding: 2px 0;">Connection Wire</span>
+            <span class="config-type-badge">${edge.protocol}</span>
+          </div>
+          <button id="btn-close-config" class="btn-icon-close" title="Close">✕</button>
+        </div>
+      </div>
+
+      <div class="config-body">
+        <!-- Node Connection Endpoints Card -->
+        <div class="edge-endpoints-card">
+          <div class="endpoint-node">
+            <span class="endpoint-dot" style="background: ${fromMeta.color || '#3B82F6'};"></span>
+            <span class="endpoint-name">${fromNode ? fromNode.name : 'Unknown'}</span>
+          </div>
+          <div class="endpoint-arrow">➔</div>
+          <div class="endpoint-node">
+            <span class="endpoint-dot" style="background: ${toMeta.color || '#10B981'};"></span>
+            <span class="endpoint-name">${toNode ? toNode.name : 'Unknown'}</span>
+          </div>
+        </div>
+
+        <!-- Protocol Selection Form -->
+        <div class="form-group">
+          <label class="form-label">Network Protocol</label>
+          <select class="form-select" id="edge-protocol-select">
+            ${protocolOptions.map(p => `
+              <option value="${p}" ${p === edge.protocol ? 'selected' : ''}>${PROTOCOLS_METADATA[p].name} (${PROTOCOLS_METADATA[p].category})</option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Network Latency Overhead: <strong id="lbl-edge-latency">${(edge.latency_overhead_ms || 1.0).toFixed(1)}ms</strong></label>
+          <input type="range" class="form-range" id="edge-latency-range" min="0.2" max="25.0" step="0.2" value="${edge.latency_overhead_ms || 1.0}" />
+        </div>
+
+        <!-- Protocol Deep Dive Info Card -->
+        <div class="concept-explainer-card">
+          <div class="concept-explainer-header">
+            <span class="concept-icon">🌐</span>
+            <span class="concept-heading">${protocolInfo.name}</span>
+          </div>
+          <div class="concept-body-text">
+            ${protocolInfo.description}
+          </div>
+          <div class="protocol-pros-cons">
+            <div class="pro-item"><strong>✓ Pros:</strong> ${protocolInfo.pros}</div>
+            <div class="con-item"><strong>✗ Cons:</strong> ${protocolInfo.cons}</div>
+          </div>
+          <div class="concept-interview-tip">
+            <strong>🎯 Best For:</strong> ${protocolInfo.bestFor}
+          </div>
+        </div>
+
+        <div class="config-divider"></div>
+
+        <button id="btn-delete-edge" class="btn-delete-component">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span>Delete Connection Wire</span>
+        </button>
+      </div>
+    `;
+
+    this._bindEdgeEvents(edge);
+  }
+
+  _bindEdgeEvents(edge) {
+    const closeBtn = this.container.querySelector('#btn-close-config');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        stateManager.clearSelection();
+        this.closeMobileInspector();
+      });
+    }
+
+    const protoSelect = this.container.querySelector('#edge-protocol-select');
+    if (protoSelect) {
+      protoSelect.addEventListener('change', (e) => {
+        const newProto = e.target.value;
+        const meta = PROTOCOLS_METADATA[newProto];
+        const newLatency = meta ? meta.latencyMs : (edge.latency_overhead_ms || 1.0);
+        stateManager.updateEdgeConfig(edge.id, {
+          protocol: newProto,
+          latency_overhead_ms: newLatency
+        });
+        this.renderEdgeConfig(edge);
+      });
+    }
+
+    const latRange = this.container.querySelector('#edge-latency-range');
+    if (latRange) {
+      latRange.addEventListener('input', (e) => {
+        const val = Number(e.target.value);
+        const lbl = this.container.querySelector('#lbl-edge-latency');
+        if (lbl) lbl.textContent = `${val.toFixed(1)}ms`;
+        stateManager.updateEdgeConfig(edge.id, { latency_overhead_ms: val });
+      });
+    }
+
+    const delBtn = this.container.querySelector('#btn-delete-edge');
+    if (delBtn) {
+      delBtn.addEventListener('click', () => {
+        stateManager.removeEdge(edge.id);
+      });
+    }
   }
 }

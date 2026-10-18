@@ -6,11 +6,13 @@
  * alongside sorted interview practice scenarios. Fully optimized for touch & mobile.
  */
 
-import { COMPONENT_METADATA } from '../../core/constants.js';
+import { COMPONENT_METADATA, EVENTS } from '../../core/constants.js';
 import { SCENARIOS } from '../../ai/scenarios.js';
 import { stateManager } from '../../core/state-manager.js';
 import { historyManager } from '../../core/history-manager.js';
 import { showToast } from '../ui/dialog.js';
+import { showConceptModal } from '../ui/concept-modal.js';
+import { eventBus } from '../../core/event-bus.js';
 
 export class ComponentPalette {
   constructor(containerElement, canvasRenderer) {
@@ -52,7 +54,13 @@ export class ComponentPalette {
               <span class="component-dot" style="background: ${meta.color};"></span>
             </div>
             <div class="component-info">
-              <div class="component-name">${meta.name}</div>
+              <div class="component-name-row">
+                <span class="component-name">${meta.name}</span>
+                <button class="btn-component-learn" data-type="${type}" title="Learn about ${meta.name} (Analogy, trade-offs & tips)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span>Learn</span>
+                </button>
+              </div>
               <div class="component-desc">${meta.description}</div>
             </div>
           </div>
@@ -64,10 +72,10 @@ export class ComponentPalette {
       <div class="palette-instructions">
         <h3 class="section-title">Canvas Gestures</h3>
         <ul class="shortcut-list">
-          <li><span>Tap / Click</span> Select component</li>
-          <li><span>Drag / Touch</span> Move node or pan</li>
+          <li><span>Tap / Click</span> Select component or wire</li>
+          <li><span>Drag / Touch</span> Move node or pan canvas</li>
           <li><span>Pinch / Wheel</span> Zoom in/out</li>
-          <li><span>Port Touch</span> Wire connection</li>
+          <li><span>Port Touch</span> Wire connection between nodes</li>
           <li><span>Cmd / Ctrl + Z</span> Undo action</li>
         </ul>
       </div>
@@ -84,6 +92,7 @@ export class ComponentPalette {
         <div class="scenarios-list" id="scenarios-list">
           ${SCENARIOS.map(s => {
             const diffClass = s.difficulty.toLowerCase();
+            const objCount = (s.learningObjectives || []).length;
             return `
               <div class="scenario-card" data-scenario-id="${s.id}">
                 <div class="scenario-top">
@@ -91,6 +100,26 @@ export class ComponentPalette {
                   <span class="difficulty-badge ${diffClass}">${s.difficulty}</span>
                 </div>
                 <div class="scenario-tag">${s.tag}</div>
+                ${s.description ? `<p class="scenario-desc-snippet">${s.description}</p>` : ''}
+
+                <!-- Learning Objectives Collapsible Accordion -->
+                <button class="btn-toggle-objectives" data-scenario-id="${s.id}">
+                  <span class="obj-btn-text">📘 Learning Objectives (${objCount})</span>
+                  <span class="chevron-icon">▾</span>
+                </button>
+
+                <div class="scenario-objectives-drawer" id="objectives-${s.id}" style="display: none;">
+                  <ul class="scenario-objectives-list">
+                    ${(s.learningObjectives || []).map(obj => `
+                      <li><span class="obj-check">✓</span> <span>${obj}</span></li>
+                    `).join('')}
+                  </ul>
+                  <div class="scenario-meta-details">
+                    <span>Target: <strong>${(s.targetRps / 1000).toFixed(0)}k RPS</strong></span>
+                    <span>Ratio: <strong>${((s.readWriteRatio || 0.8) * 100).toFixed(0)}% reads</strong></span>
+                  </div>
+                </div>
+
                 <div class="scenario-actions">
                   <span class="scenario-load-target">${(s.targetRps / 1000).toFixed(0)}k rps</span>
                   <button class="btn-load-scenario" data-scenario-id="${s.id}">Load Architecture</button>
@@ -137,9 +166,21 @@ export class ComponentPalette {
       });
 
       // Tap-to-add for mobile & convenience on desktop
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        // Ignore if clicking the Learn button
+        if (e.target.closest('.btn-component-learn')) return;
         const type = card.getAttribute('data-type');
         this.addNodeToCanvas(type);
+      });
+    });
+
+    // Learn info buttons on component cards
+    const learnButtons = this.container.querySelectorAll('.btn-component-learn');
+    learnButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const type = btn.getAttribute('data-type');
+        showConceptModal(type, (t) => this.addNodeToCanvas(t));
       });
     });
   }
@@ -187,14 +228,31 @@ export class ComponentPalette {
   }
 
   _bindScenarioEvents() {
+    // Objectives toggle accordions
+    const toggleBtns = this.container.querySelectorAll('.btn-toggle-objectives');
+    toggleBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const scenarioId = btn.getAttribute('data-scenario-id');
+        const drawer = this.container.querySelector(`#objectives-${scenarioId}`);
+        if (drawer) {
+          const isOpen = drawer.style.display !== 'none';
+          drawer.style.display = isOpen ? 'none' : 'block';
+          btn.classList.toggle('expanded', !isOpen);
+        }
+      });
+    });
+
     const buttons = this.container.querySelectorAll('.btn-load-scenario');
     buttons.forEach(btn => {
       btn.addEventListener('click', () => {
         const scenarioId = btn.getAttribute('data-scenario-id');
         const scenario = SCENARIOS.find(s => s.id === scenarioId);
         if (scenario) {
+          stateManager.activeScenario = scenario;
           stateManager.loadGraph(scenario.graph);
           stateManager.updateSimConfig({ target_rps: scenario.targetRps });
+
+          eventBus.emit(EVENTS.SCENARIO_SELECTED, scenario);
 
           if (this.renderer && this.renderer.camera) {
             setTimeout(() => {

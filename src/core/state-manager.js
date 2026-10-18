@@ -41,6 +41,7 @@ export class StateManager {
 
     // Auto-analysis debounce timer
     this._analysisDebounceTimer = null;
+    this._autoSaveTimer = null;
   }
 
   /**
@@ -79,6 +80,7 @@ export class StateManager {
 
     eventBus.emit(EVENTS.NODE_ADDED, node);
     this.triggerRealtimeAnalysis();
+    this.scheduleAutoSave();
     return node;
   }
 
@@ -112,6 +114,7 @@ export class StateManager {
 
     eventBus.emit(EVENTS.NODE_REMOVED, { id: nodeId, node });
     this.triggerRealtimeAnalysis();
+    this.scheduleAutoSave();
   }
 
   /**
@@ -128,6 +131,7 @@ export class StateManager {
     node.y = Math.round(y);
 
     eventBus.emit(EVENTS.NODE_MOVED, { id: nodeId, x: node.x, y: node.y });
+    this.scheduleAutoSave();
   }
 
   /**
@@ -147,6 +151,7 @@ export class StateManager {
     wasmBridge.addNode(node); // updates wasm shadow
     eventBus.emit(EVENTS.NODE_UPDATED, node);
     this.triggerRealtimeAnalysis();
+    this.scheduleAutoSave();
   }
 
   /**
@@ -161,6 +166,7 @@ export class StateManager {
     node.name = newName;
     wasmBridge.addNode(node);
     eventBus.emit(EVENTS.NODE_UPDATED, node);
+    this.scheduleAutoSave();
   }
 
   /**
@@ -200,7 +206,25 @@ export class StateManager {
 
     eventBus.emit(EVENTS.EDGE_ADDED, edge);
     this.triggerRealtimeAnalysis();
+    this.scheduleAutoSave();
     return edge;
+  }
+
+  /**
+   * Update edge configuration properties (e.g. protocol, latency overhead)
+   * @param {string} edgeId
+   * @param {Object} partialConfig
+   */
+  updateEdgeConfig(edgeId, partialConfig) {
+    const edge = this.edges.get(edgeId);
+    if (!edge) return;
+
+    Object.assign(edge, partialConfig);
+    wasmBridge.addEdge(edge);
+
+    eventBus.emit(EVENTS.EDGE_UPDATED, edge);
+    this.triggerRealtimeAnalysis();
+    this.scheduleAutoSave();
   }
 
   /**
@@ -221,17 +245,23 @@ export class StateManager {
 
     eventBus.emit(EVENTS.EDGE_REMOVED, { id: edgeId, edge });
     this.triggerRealtimeAnalysis();
+    this.scheduleAutoSave();
   }
 
   /**
    * Clear all nodes and edges
+   * @param {boolean} clearPersisted
    */
-  clearGraph() {
+  clearGraph(clearPersisted = true) {
     this.nodes.clear();
     this.edges.clear();
     this.selectedNodeId = null;
     this.selectedEdgeId = null;
     wasmBridge.clear();
+
+    if (clearPersisted) {
+      this.clearSavedGraph();
+    }
 
     eventBus.emit(EVENTS.GRAPH_CLEARED);
     eventBus.emit(EVENTS.SELECTION_CHANGED, { node: null, edge: null });
@@ -241,9 +271,10 @@ export class StateManager {
   /**
    * Load a full graph snapshot (from template/scenario/localStorage)
    * @param {Object} graphData - { nodes: [], edges: [] }
+   * @param {boolean} shouldAutoSave
    */
-  loadGraph(graphData) {
-    this.clearGraph();
+  loadGraph(graphData, shouldAutoSave = true) {
+    this.clearGraph(false);
 
     if (Array.isArray(graphData.nodes)) {
       for (const node of graphData.nodes) {
@@ -259,6 +290,70 @@ export class StateManager {
 
     eventBus.emit(EVENTS.GRAPH_LOADED, { nodes: this.nodes, edges: this.edges });
     this.triggerRealtimeAnalysis();
+
+    if (shouldAutoSave) {
+      this.scheduleAutoSave();
+    }
+  }
+
+  // ============================================================================
+  // LOCALSTORAGE AUTOSAVE & RESTORATION
+  // ============================================================================
+
+  scheduleAutoSave() {
+    clearTimeout(this._autoSaveTimer);
+    this._autoSaveTimer = setTimeout(() => {
+      this.saveToLocalStorage();
+    }, 400);
+  }
+
+  saveToLocalStorage() {
+    try {
+      if (this.nodes.size === 0 && this.edges.size === 0) {
+        localStorage.removeItem('sds_autosave_graph');
+        return;
+      }
+      const data = {
+        nodes: Array.from(this.nodes.values()),
+        edges: Array.from(this.edges.values()),
+        simConfig: {
+          target_rps: this.simConfig.target_rps,
+          profile: this.simConfig.profile,
+          duration_seconds: this.simConfig.duration_seconds,
+          read_write_ratio: this.simConfig.read_write_ratio
+        },
+        savedAt: Date.now()
+      };
+      localStorage.setItem('sds_autosave_graph', JSON.stringify(data));
+    } catch (err) {
+      console.warn('[StateManager] Failed to auto-save to localStorage:', err);
+    }
+  }
+
+  restoreFromLocalStorage() {
+    try {
+      const raw = localStorage.getItem('sds_autosave_graph');
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.nodes) && data.nodes.length > 0) {
+        this.loadGraph(data, false);
+        if (data.simConfig) {
+          this.updateSimConfig(data.simConfig);
+        }
+        return true;
+      }
+    } catch (err) {
+      console.warn('[StateManager] Failed to restore from localStorage:', err);
+    }
+    return false;
+  }
+
+  clearSavedGraph() {
+    try {
+      localStorage.removeItem('sds_autosave_graph');
+    } catch (e) {
+      // ignore
+    }
   }
 
   // ============================================================================
