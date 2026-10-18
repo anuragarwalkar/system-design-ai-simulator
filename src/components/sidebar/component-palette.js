@@ -31,6 +31,20 @@ export class ComponentPalette {
         </div>
       </div>
 
+      <!-- Traffic Simulation Section (Moved from canvas to left panel) -->
+      <div class="sidebar-load-section">
+        <div class="sidebar-section-header">
+          <h3 class="section-title">Traffic Simulation</h3>
+        </div>
+        <div class="sidebar-load-hud" id="load-hud"></div>
+      </div>
+
+      <div class="palette-section-divider"></div>
+
+      <div class="sidebar-section-header">
+        <h3 class="section-title">Infrastructure Components</h3>
+      </div>
+
       <div class="component-list" id="component-list">
         ${Object.entries(COMPONENT_METADATA).map(([type, meta]) => `
           <div class="component-card" draggable="true" data-type="${type}" role="button" tabindex="0" title="Tap to add ${meta.name} to canvas">

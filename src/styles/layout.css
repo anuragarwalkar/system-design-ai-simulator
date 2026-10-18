@@ -42,8 +42,8 @@
 
 /* LEFT SIDEBAR */
 .app-sidebar {
-  width: 280px;
-  min-width: 280px;
+  width: 300px;
+  min-width: 300px;
   height: 100%;
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
@@ -51,7 +51,7 @@
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 18px 14px;
+  padding: 16px 14px;
   gap: 16px;
   z-index: 25;
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
@@ -103,12 +103,15 @@
   transition: all 0.25s ease;
 }
 
-.floating-load-hud {
-  position: absolute;
-  bottom: 24px;
-  right: 24px;
-  z-index: 15;
-  transition: all 0.25s ease;
+/* SIDEBAR LOAD INJECTOR SECTION */
+.sidebar-load-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-load-hud {
+  width: 100%;
 }
 
 /* BRANDING */
@@ -293,21 +296,6 @@
     opacity: 0;
     pointer-events: none;
     transform: translateX(-50%) translateY(-12px);
-  }
-
-  .floating-load-hud {
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
-    width: auto;
-    max-width: calc(100vw - 20px);
-    margin: 0 auto;
-  }
-
-  .floating-load-hud.mobile-hidden {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(16px);
   }
 }
 

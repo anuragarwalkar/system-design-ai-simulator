@@ -53,9 +53,9 @@ export class LoadInjector {
         </div>
 
         <div class="load-profiles-row">
-          <button class="profile-chip active" data-profile="Constant">Constant</button>
-          <button class="profile-chip" data-profile="Spike">⚡ Flash Spike</button>
-          <button class="profile-chip" data-profile="Sinusoidal">🌊 Diurnal Wave</button>
+          <button class="profile-chip active" data-profile="Constant" title="Constant Traffic">Constant</button>
+          <button class="profile-chip" data-profile="Spike" title="Flash Spike Traffic">⚡ Spike</button>
+          <button class="profile-chip" data-profile="Sinusoidal" title="Diurnal Sinusoidal Wave">🌊 Wave</button>
         </div>
       </div>
     `;

@@ -101,19 +101,16 @@ export class MobileNav {
 
     // 2. Load Injector Tab
     btnLoad.addEventListener('click', () => {
-      if (!this.loadHud) return;
-      const isHidden = this.loadHud.classList.contains('mobile-hidden');
-      if (isHidden) {
-        this.loadHud.classList.remove('mobile-hidden');
-        btnLoad.classList.add('active');
-      } else {
-        // If already visible, toggle collapse or hide
-        const inner = this.loadHud.querySelector('.load-card');
+      this.closeInspector();
+      this.openSidebar();
+      const loadSection = document.getElementById('load-hud');
+      if (loadSection) {
+        loadSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Expand if collapsed
+        const inner = loadSection.querySelector('.load-card');
         if (inner && inner.classList.contains('collapsed')) {
-          inner.classList.remove('collapsed');
-        } else {
-          this.loadHud.classList.add('mobile-hidden');
-          btnLoad.classList.remove('active');
+          const collapseBtn = loadSection.querySelector('#btn-collapse-load');
+          if (collapseBtn) collapseBtn.click();
         }
       }
     });
@@ -162,6 +159,14 @@ export class MobileNav {
     const isOpen = this.sidebar.classList.toggle('mobile-open');
     if (this.sidebarBackdrop) {
       this.sidebarBackdrop.classList.toggle('active', isOpen);
+    }
+  }
+
+  openSidebar() {
+    if (!this.sidebar) return;
+    this.sidebar.classList.add('mobile-open');
+    if (this.sidebarBackdrop) {
+      this.sidebarBackdrop.classList.add('active');
     }
   }
 
