@@ -24,7 +24,6 @@ import { MetricsDashboard } from './components/simulation/metrics-dashboard.js';
 import { LoadInjector } from './components/simulation/load-injector.js';
 import { AiChatPanel } from './components/ai/ai-chat.js';
 import { ArchitectureEvaluationPanel } from './components/ai/ai-evaluation.js';
-import { SCENARIOS } from './ai/scenarios.js';
 
 async function bootstrap() {
   console.log('[App] Bootstrapping System Design AI Simulator...');
@@ -69,19 +68,10 @@ async function bootstrap() {
     new MobileNav(mobileNavContainer);
   }
 
-  // 5. Load Initial Starter Scenario (URL Shortener - Bitly)
-  const starterScenario = SCENARIOS[0];
-  if (starterScenario) {
-    stateManager.loadGraph(starterScenario.graph);
-    stateManager.updateSimConfig({ target_rps: 50000 });
+  // 5. Start with a clean empty canvas by default
+  renderer.camera.reset();
 
-    // Center camera after first frame layout settles
-    setTimeout(() => {
-      renderer.camera.fitToContent(stateManager.nodes);
-    }, 150);
-  }
-
-  console.log('[App] System Design AI Simulator successfully running at 60FPS.');
+  console.log('[App] System Design AI Simulator successfully running at 60FPS with clean canvas.');
 }
 
 window.addEventListener('DOMContentLoaded', bootstrap);

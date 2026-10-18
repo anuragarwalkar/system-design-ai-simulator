@@ -52,8 +52,8 @@ export const COMPONENT_METADATA = {
     hourlyCost: 0.12
   },
   [COMPONENT_TYPES.MICROSERVICE]: {
-    name: 'Microservice',
-    description: 'Business logic & computation',
+    name: 'Server / Microservice',
+    description: 'Backend app server, API logic & compute',
     badge: 'Compute Engine',
     color: '#F59E0B', // Amber
     accentBg: 'rgba(245, 158, 11, 0.12)',
