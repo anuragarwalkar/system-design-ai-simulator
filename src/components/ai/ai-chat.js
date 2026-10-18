@@ -3,7 +3,7 @@
  * AI Architect Chat Drawer (LangChain Agent Integration)
  * ==============================================================================
  * Interactive chat interface enabling users to design entire distributed architectures
- * via natural language, execute tools, and configure custom API keys.
+ * via natural language, execute tools, and configure Google Gemini or OpenAI API keys.
  */
 
 import { langChainAgent } from '../../ai/langchain-agent.js';
@@ -20,7 +20,11 @@ export class AiChatPanel {
   }
 
   render() {
+    const isGemini = langChainAgent.provider === 'gemini';
     const hasKey = !!langChainAgent.apiKey;
+    const badgeText = hasKey
+      ? (isGemini ? `✨ Gemini (${langChainAgent.modelName})` : `⚡ OpenAI (${langChainAgent.modelName})`)
+      : '⚙️ Built-In Model';
 
     this.container.innerHTML = `
       <div class="ai-drawer-overlay ${this.isOpen ? 'open' : ''}" id="ai-overlay"></div>
@@ -29,33 +33,74 @@ export class AiChatPanel {
           <div class="ai-header-left">
             <span class="ai-header-icon">✨</span>
             <div>
-              <h3 class="ai-title">AI System Architect</h3>
-              <p class="ai-subtitle">Powered by LangChain & WASM</p>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 class="ai-title">AI System Architect</h3>
+                <span class="provider-badge" id="ai-status-badge">${badgeText}</span>
+              </div>
+              <p class="ai-subtitle">Powered by Google Gemini, LangChain & WASM</p>
             </div>
           </div>
           <div class="ai-header-actions">
-            <button id="btn-ai-settings" class="btn-icon-subtle" title="Configure Custom API Token / Model">⚙️</button>
+            <button id="btn-ai-settings" class="btn-icon-subtle" title="Configure Gemini / OpenAI API Settings">⚙️</button>
             <button id="btn-close-ai" class="btn-icon-subtle" title="Close Panel">✕</button>
           </div>
         </div>
 
         <!-- Token Settings Modal / Accordion -->
         <div class="ai-settings-card" id="ai-settings-card" style="display: none;">
-          <h4 class="settings-title">Custom LangChain API Configuration</h4>
-          <p class="settings-desc">Provide your OpenAI API key or custom LLM endpoint. Token is stored securely in your browser's localStorage.</p>
+          <h4 class="settings-title">AI Provider & API Configuration</h4>
+          <p class="settings-desc">Configure your Google Gemini or OpenAI API key for live natural language architecture synthesis. Keys are stored locally in your browser.</p>
+
           <div class="form-group">
-            <label class="form-label">API Token / Key</label>
-            <input type="password" id="input-api-key" class="form-input" placeholder="sk-..." value="${langChainAgent.apiKey}" />
+            <label class="form-label">AI Provider</label>
+            <select id="select-ai-provider" class="form-select">
+              <option value="gemini" ${isGemini ? 'selected' : ''}>Google Gemini API (Recommended)</option>
+              <option value="openai" ${!isGemini ? 'selected' : ''}>OpenAI / Custom LLM (GPT-4o, Ollama)</option>
+            </select>
           </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>API Key / Token</span>
+              <span id="key-help-wrap">
+                ${isGemini ? '<a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color: var(--accent-primary); font-size: 11px; text-decoration: underline;">Get free Gemini Key ↗</a>' : ''}
+              </span>
+            </label>
+            <input type="password" id="input-api-key" class="form-input" placeholder="${isGemini ? 'AIzaSy...' : 'sk-...'}" value="${langChainAgent.apiKey}" />
+          </div>
+
           <div class="form-group">
             <label class="form-label">Model</label>
-            <input type="text" id="input-ai-model" class="form-input" placeholder="gpt-4o" value="${langChainAgent.modelName}" />
+            <input type="text" id="input-ai-model" class="form-input" placeholder="${isGemini ? 'gemini-2.0-flash' : 'gpt-4o'}" value="${langChainAgent.modelName}" />
+            <div class="model-chip-row" id="model-chips-container">
+              ${isGemini
+                ? `
+                  <button type="button" class="model-chip ${langChainAgent.modelName === 'gemini-2.0-flash' ? 'active' : ''}" data-model="gemini-2.0-flash">gemini-2.0-flash</button>
+                  <button type="button" class="model-chip ${langChainAgent.modelName === 'gemini-1.5-flash' ? 'active' : ''}" data-model="gemini-1.5-flash">gemini-1.5-flash</button>
+                  <button type="button" class="model-chip ${langChainAgent.modelName === 'gemini-1.5-pro' ? 'active' : ''}" data-model="gemini-1.5-pro">gemini-1.5-pro</button>
+                `
+                : `
+                  <button type="button" class="model-chip ${langChainAgent.modelName === 'gpt-4o' ? 'active' : ''}" data-model="gpt-4o">gpt-4o</button>
+                  <button type="button" class="model-chip ${langChainAgent.modelName === 'gpt-4o-mini' ? 'active' : ''}" data-model="gpt-4o-mini">gpt-4o-mini</button>
+                `
+              }
+            </div>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Custom Endpoint URL (Optional)</label>
-            <input type="text" id="input-ai-endpoint" class="form-input" placeholder="https://api.openai.com/v1" value="${langChainAgent.endpoint}" />
+            <label class="form-label">API Endpoint URL</label>
+            <input type="text" id="input-ai-endpoint" class="form-input" placeholder="${isGemini ? 'https://generativelanguage.googleapis.com/v1beta' : 'https://api.openai.com/v1'}" value="${langChainAgent.endpoint}" />
           </div>
-          <button id="btn-save-ai-settings" class="btn-primary-sm">Save Token</button>
+
+          <div class="settings-btn-row">
+            <button id="btn-save-ai-settings" class="btn-primary-sm">Save Configuration</button>
+            <button id="btn-test-ai-model" class="btn-test-sm" title="Test model connectivity and latency">
+              <span class="btn-test-icon">⚡</span>
+              <span class="btn-test-label">Test Model</span>
+            </button>
+            <button id="btn-clear-ai-settings" class="btn-secondary-sm">Use Built-In AI (Offline)</button>
+          </div>
+          <div id="ai-test-status" class="ai-test-status" style="display: none;"></div>
         </div>
 
         <!-- Chat Stream -->
@@ -97,6 +142,8 @@ export class AiChatPanel {
     const settingsBtn = this.container.querySelector('#btn-ai-settings');
     const settingsCard = this.container.querySelector('#ai-settings-card');
     const saveSettingsBtn = this.container.querySelector('#btn-save-ai-settings');
+    const clearSettingsBtn = this.container.querySelector('#btn-clear-ai-settings');
+    const providerSelect = this.container.querySelector('#select-ai-provider');
     const sendBtn = this.container.querySelector('#btn-send-prompt');
     const promptInput = this.container.querySelector('#ai-prompt-input');
     const quickChips = this.container.querySelectorAll('.quick-chip');
@@ -117,18 +164,144 @@ export class AiChatPanel {
       settingsCard.style.display = isVisible ? 'none' : 'block';
     });
 
+    // Provider Selector change
+    if (providerSelect) {
+      providerSelect.addEventListener('change', () => {
+        const prov = providerSelect.value;
+        const keyInput = this.container.querySelector('#input-api-key');
+        const modelInput = this.container.querySelector('#input-ai-model');
+        const endpointInput = this.container.querySelector('#input-ai-endpoint');
+        const helpWrap = this.container.querySelector('#key-help-wrap');
+        const chipsContainer = this.container.querySelector('#model-chips-container');
+
+        if (prov === 'gemini') {
+          keyInput.placeholder = 'AIzaSy...';
+          modelInput.placeholder = 'gemini-2.0-flash';
+          modelInput.value = 'gemini-2.0-flash';
+          endpointInput.placeholder = 'https://generativelanguage.googleapis.com/v1beta';
+          endpointInput.value = 'https://generativelanguage.googleapis.com/v1beta';
+          if (helpWrap) {
+            helpWrap.innerHTML = '<a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color: var(--accent-primary); font-size: 11px; text-decoration: underline;">Get free Gemini Key ↗</a>';
+          }
+          if (chipsContainer) {
+            chipsContainer.innerHTML = `
+              <button type="button" class="model-chip active" data-model="gemini-2.0-flash">gemini-2.0-flash</button>
+              <button type="button" class="model-chip" data-model="gemini-1.5-flash">gemini-1.5-flash</button>
+              <button type="button" class="model-chip" data-model="gemini-1.5-pro">gemini-1.5-pro</button>
+            `;
+            this._bindModelChips();
+          }
+        } else {
+          keyInput.placeholder = 'sk-...';
+          modelInput.placeholder = 'gpt-4o';
+          modelInput.value = 'gpt-4o';
+          endpointInput.placeholder = 'https://api.openai.com/v1';
+          endpointInput.value = 'https://api.openai.com/v1';
+          if (helpWrap) helpWrap.innerHTML = '';
+          if (chipsContainer) {
+            chipsContainer.innerHTML = `
+              <button type="button" class="model-chip active" data-model="gpt-4o">gpt-4o</button>
+              <button type="button" class="model-chip" data-model="gpt-4o-mini">gpt-4o-mini</button>
+            `;
+            this._bindModelChips();
+          }
+        }
+      });
+    }
+
+    this._bindModelChips();
+
+    // Save Settings
     saveSettingsBtn.addEventListener('click', () => {
+      const prov = this.container.querySelector('#select-ai-provider').value;
       const key = this.container.querySelector('#input-api-key').value;
       const model = this.container.querySelector('#input-ai-model').value;
       const endpoint = this.container.querySelector('#input-ai-endpoint').value;
 
+      langChainAgent.setProvider(prov);
       langChainAgent.setApiKey(key);
       langChainAgent.setModel(model);
       langChainAgent.setEndpoint(endpoint);
 
       settingsCard.style.display = 'none';
-      showToast('AI API configuration saved successfully!', 'success');
+      const badge = this.container.querySelector('#ai-status-badge');
+      if (badge) {
+        badge.textContent = key.trim()
+          ? (prov === 'gemini' ? `✨ Gemini (${model})` : `⚡ OpenAI (${model})`)
+          : '⚙️ Built-In Model';
+      }
+      showToast(`AI settings saved (${prov === 'gemini' ? 'Google Gemini' : 'OpenAI'})!`, 'success');
     });
+
+    // Clear Settings (Revert to built-in offline)
+    clearSettingsBtn.addEventListener('click', () => {
+      langChainAgent.clearSettings();
+      settingsCard.style.display = 'none';
+      this.render();
+      this._bindEvents();
+      showToast('Reverted to Built-In AI Architect (Offline)', 'info');
+    });
+
+    // Test Model Connectivity
+    const testModelBtn = this.container.querySelector('#btn-test-ai-model');
+    const testStatusBox = this.container.querySelector('#ai-test-status');
+
+    if (testModelBtn) {
+      testModelBtn.addEventListener('click', async () => {
+        const prov = this.container.querySelector('#select-ai-provider').value;
+        const key = this.container.querySelector('#input-api-key').value;
+        const model = this.container.querySelector('#input-ai-model').value;
+        const endpoint = this.container.querySelector('#input-ai-endpoint').value;
+
+        if (!key.trim()) {
+          showToast('Please enter an API Key / Token before testing.', 'warning');
+          this.container.querySelector('#input-api-key').focus();
+          if (testStatusBox) {
+            testStatusBox.className = 'ai-test-status error';
+            testStatusBox.style.display = 'block';
+            testStatusBox.innerHTML = `⚠️ <strong>Missing Key:</strong> Please enter your API key above to test connectivity.`;
+          }
+          return;
+        }
+
+        const originalHtml = testModelBtn.innerHTML;
+        testModelBtn.disabled = true;
+        testModelBtn.innerHTML = `<span class="btn-spinner"></span> <span>Testing...</span>`;
+
+        if (testStatusBox) {
+          testStatusBox.className = 'ai-test-status loading';
+          testStatusBox.style.display = 'block';
+          testStatusBox.innerHTML = `⏳ Testing connection to <strong>${prov === 'gemini' ? 'Google Gemini' : 'OpenAI'}</strong> (<code>${model}</code>)...`;
+        }
+
+        try {
+          const res = await langChainAgent.testConnection({
+            provider: prov,
+            apiKey: key,
+            modelName: model,
+            endpoint: endpoint
+          });
+
+          if (testStatusBox) {
+            testStatusBox.className = 'ai-test-status success';
+            testStatusBox.style.display = 'block';
+            testStatusBox.innerHTML = `✅ <strong>Connected (${res.latencyMs}ms):</strong> ${res.provider} <code>${res.model}</code> responded successfully!<br><small style="opacity: 0.85;">Sample reply: "${res.sampleReply}"</small>`;
+          }
+          showToast(`✓ ${res.provider} (${res.model}) test succeeded in ${res.latencyMs}ms!`, 'success');
+        } catch (err) {
+          console.error('[AI Test Error]', err);
+          if (testStatusBox) {
+            testStatusBox.className = 'ai-test-status error';
+            testStatusBox.style.display = 'block';
+            testStatusBox.innerHTML = `❌ <strong>Test Failed:</strong> ${err.message}`;
+          }
+          showToast(`Test failed: ${err.message}`, 'error');
+        } finally {
+          testModelBtn.disabled = false;
+          testModelBtn.innerHTML = originalHtml;
+        }
+      });
+    }
 
     // Send on click
     sendBtn.addEventListener('click', () => this._sendCurrentPrompt());
@@ -160,6 +333,19 @@ export class AiChatPanel {
       sendBtn.disabled = isProcessing;
       promptInput.disabled = isProcessing;
       sendBtn.style.opacity = isProcessing ? '0.5' : '1.0';
+    });
+  }
+
+  _bindModelChips() {
+    const modelInput = this.container.querySelector('#input-ai-model');
+    const chips = this.container.querySelectorAll('.model-chip');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const chosenModel = chip.getAttribute('data-model');
+        if (modelInput) modelInput.value = chosenModel;
+      });
     });
   }
 
@@ -199,6 +385,7 @@ export class AiChatPanel {
     let formatted = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/\n\n/g, '<br><br>')
       .replace(/\n• /g, '<br>• ');
 
