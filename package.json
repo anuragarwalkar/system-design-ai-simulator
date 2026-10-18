@@ -1,0 +1,29 @@
+{
+  "name": "system-design-ai-simulator",
+  "version": "1.0.0",
+  "description": "Interactive, 60FPS System Design Simulator powered by WebAssembly, HTML5 Canvas, and AI LangChain",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide": "^0.469.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  },
+  "keywords": [
+    "system-design",
+    "webassembly",
+    "wasm",
+    "canvas",
+    "simulation",
+    "langchain",
+    "distributed-systems",
+    "interview-prep"
+  ],
+  "author": "System Design Simulator Team",
+  "license": "MIT"
+}
