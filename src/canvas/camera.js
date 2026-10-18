@@ -2,8 +2,9 @@
  * ==============================================================================
  * Canvas Camera (Pan & Zoom Viewport)
  * ==============================================================================
- * Transforms world coordinates (graph space) to screen coordinates (pixels).
+ * Transforms world coordinates (graph space) to screen coordinates (CSS pixels).
  * Supports smooth mouse wheel zooming, middle/space panning, and pinch gestures.
+ * Fully calibrated for High-DPI / Retina displays.
  */
 
 import { CANVAS_CONFIG } from '../core/constants.js';
@@ -21,19 +22,32 @@ export class Camera {
   }
 
   /**
-   * Convert Screen coordinate (client pixels) to World coordinate (graph space)
-   * @param {number} screenX
-   * @param {number} screenY
+   * Returns current visible CSS dimensions of canvas in device-independent pixels
+   */
+  getViewportSize() {
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    return {
+      width: rect.width || (this.canvas.width / dpr) || 800,
+      height: rect.height || (this.canvas.height / dpr) || 600
+    };
+  }
+
+  /**
+   * Convert Screen coordinate (client pixels from event) to World coordinate (graph space)
+   * @param {number} screenX - e.clientX
+   * @param {number} screenY - e.clientY
    * @returns {{x: number, y: number}}
    */
   screenToWorld(screenX, screenY) {
     const rect = this.canvas.getBoundingClientRect();
     const canvasX = screenX - rect.left;
     const canvasY = screenY - rect.top;
+    const vp = this.getViewportSize();
 
     return {
-      x: (canvasX - this.canvas.width / 2) / this.zoom + this.x,
-      y: (canvasY - this.canvas.height / 2) / this.zoom + this.y
+      x: (canvasX - vp.width / 2) / this.zoom + this.x,
+      y: (canvasY - vp.height / 2) / this.zoom + this.y
     };
   }
 
@@ -44,9 +58,10 @@ export class Camera {
    * @returns {{x: number, y: number}}
    */
   worldToScreen(worldX, worldY) {
+    const vp = this.getViewportSize();
     return {
-      x: (worldX - this.x) * this.zoom + this.canvas.width / 2,
-      y: (worldY - this.y) * this.zoom + this.canvas.height / 2
+      x: (worldX - this.x) * this.zoom + vp.width / 2,
+      y: (worldY - this.y) * this.zoom + vp.height / 2
     };
   }
 
@@ -55,7 +70,8 @@ export class Camera {
    * @param {CanvasRenderingContext2D} ctx
    */
   applyTransform(ctx) {
-    ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+    const vp = this.getViewportSize();
+    ctx.translate(vp.width / 2, vp.height / 2);
     ctx.scale(this.zoom, this.zoom);
     ctx.translate(-this.x, -this.y);
   }
@@ -63,8 +79,8 @@ export class Camera {
   /**
    * Zoom centered at a specific screen coordinate
    * @param {number} deltaZoom - Positive to zoom in, negative to zoom out
-   * @param {number} screenX - Cursor screen X
-   * @param {number} screenY - Cursor screen Y
+   * @param {number} screenX - Cursor screen X (e.clientX)
+   * @param {number} screenY - Cursor screen Y (e.clientY)
    */
   zoomAt(deltaZoom, screenX, screenY) {
     const worldBefore = this.screenToWorld(screenX, screenY);
@@ -81,9 +97,10 @@ export class Camera {
     const rect = this.canvas.getBoundingClientRect();
     const canvasX = screenX - rect.left;
     const canvasY = screenY - rect.top;
+    const vp = this.getViewportSize();
 
-    this.x = worldBefore.x - (canvasX - this.canvas.width / 2) / this.zoom;
-    this.y = worldBefore.y - (canvasY - this.canvas.height / 2) / this.zoom;
+    this.x = worldBefore.x - (canvasX - vp.width / 2) / this.zoom;
+    this.y = worldBefore.y - (canvasY - vp.height / 2) / this.zoom;
   }
 
   /**
@@ -121,9 +138,10 @@ export class Camera {
     this.x = (minX + maxX) / 2;
     this.y = (minY + maxY) / 2;
 
-    const padding = 100;
-    const zoomX = (this.canvas.width - padding) / Math.max(100, contentWidth);
-    const zoomY = (this.canvas.height - padding) / Math.max(100, contentHeight);
+    const vp = this.getViewportSize();
+    const padding = 120;
+    const zoomX = (vp.width - padding) / Math.max(100, contentWidth);
+    const zoomY = (vp.height - padding) / Math.max(100, contentHeight);
 
     this.zoom = Math.min(1.2, Math.max(0.4, Math.min(zoomX, zoomY)));
   }

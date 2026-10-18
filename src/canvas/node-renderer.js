@@ -17,7 +17,7 @@ export class NodeRenderer {
    * @param {Object} options - { isSelected, metrics, isSpof, theme, hoveredPort }
    */
   renderNode(ctx, node, options = {}) {
-    const { isSelected, metrics, isSpof, theme, hoveredPort } = options;
+    const { isSelected, metrics, isSpof, theme, hoveredPort, isConnectTarget, isWireActive, sourceNodeId } = options;
     const meta = COMPONENT_METADATA[node.component_type] || {};
     const width = CANVAS_CONFIG.NODE_WIDTH;
     const height = CANVAS_CONFIG.NODE_HEIGHT;
@@ -25,18 +25,29 @@ export class NodeRenderer {
 
     const isDark = theme === 'dark';
     const cardBg = isDark ? '#1A1D27' : '#FFFFFF';
-    const borderColor = isSelected
+    let borderColor = isSelected
       ? '#6366F1'
       : (isDark ? '#2D3348' : '#E2E5EA');
+
+    if (isConnectTarget) {
+      borderColor = '#10B981'; // Glowing emerald border when candidate target
+    }
+
     const textColor = isDark ? '#F1F5F9' : '#0F172A';
     const subTextColor = isDark ? '#94A3B8' : '#64748B';
 
     ctx.save();
 
-    // 1. Drop shadow
-    ctx.shadowColor = isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.08)';
-    ctx.shadowBlur = isSelected ? 16 : 8;
-    ctx.shadowOffsetY = isSelected ? 6 : 3;
+    // 1. Drop shadow / glow
+    if (isConnectTarget) {
+      ctx.shadowColor = 'rgba(16, 185, 129, 0.45)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 0;
+    } else {
+      ctx.shadowColor = isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.08)';
+      ctx.shadowBlur = isSelected ? 16 : 8;
+      ctx.shadowOffsetY = isSelected ? 6 : 3;
+    }
 
     // 2. Rounded card body
     ctx.beginPath();
@@ -48,9 +59,13 @@ export class NodeRenderer {
     ctx.shadowColor = 'transparent';
 
     // 3. Card border
-    ctx.lineWidth = isSelected ? 2.5 : 1.25;
+    ctx.lineWidth = (isSelected || isConnectTarget) ? 2.5 : 1.25;
     ctx.strokeStyle = borderColor;
+    if (isConnectTarget) {
+      ctx.setLineDash([5, 3]);
+    }
     ctx.stroke();
+    ctx.setLineDash([]); // reset
 
     // 4. Header accent bar & icon
     const accentColor = meta.color || '#3B82F6';
@@ -103,7 +118,7 @@ export class NodeRenderer {
     ctx.fillText(`${latencyMs}ms`, node.x + width - 12, node.y + 82);
 
     // 11. Connection Ports (Top, Bottom, Left, Right)
-    this._renderPorts(ctx, node, hoveredPort, isDark);
+    this._renderPorts(ctx, node, hoveredPort, isDark, isWireActive, sourceNodeId);
 
     ctx.restore();
   }
@@ -163,21 +178,48 @@ export class NodeRenderer {
    * Render connection ports
    * @private
    */
-  _renderPorts(ctx, node, hoveredPort, isDark) {
+  _renderPorts(ctx, node, hoveredPort, isDark, isWireActive, sourceNodeId) {
     const ports = this.getNodePorts(node);
-    const portRadius = CANVAS_CONFIG.PORT_RADIUS;
+    const portRadius = CANVAS_CONFIG.PORT_RADIUS; // 5
 
     for (const port of ports) {
       const isHovered = hoveredPort && hoveredPort.nodeId === node.id && hoveredPort.side === port.side;
+      const isTargetCandidate = isWireActive && node.id !== sourceNodeId;
 
+      ctx.save();
+
+      // Outer glow / hover ring
+      if (isHovered) {
+        ctx.beginPath();
+        ctx.arc(port.x, port.y, portRadius + 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.28)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#6366F1';
+        ctx.stroke();
+      } else if (isTargetCandidate) {
+        ctx.beginPath();
+        ctx.arc(port.x, port.y, portRadius + 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.20)';
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#10B981';
+        ctx.stroke();
+      }
+
+      // Port circle
       ctx.beginPath();
       ctx.arc(port.x, port.y, isHovered ? portRadius + 2 : portRadius, 0, Math.PI * 2);
-      ctx.fillStyle = isHovered ? '#6366F1' : (isDark ? '#475569' : '#CBD5E1');
+      ctx.fillStyle = isHovered
+        ? '#6366F1'
+        : (isTargetCandidate ? '#10B981' : (isDark ? '#475569' : '#CBD5E1'));
       ctx.fill();
 
       ctx.lineWidth = 1.5;
       ctx.strokeStyle = isDark ? '#1A1D27' : '#FFFFFF';
       ctx.stroke();
+
+      ctx.restore();
     }
   }
 

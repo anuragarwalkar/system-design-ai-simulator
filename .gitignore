@@ -1,1 +1,66 @@
-/node_modules
+# ==============================================================================
+# System Design AI Simulator - .gitignore
+# ==============================================================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build Outputs & Bundles
+dist/
+dist-ssr/
+build/
+*.local
+
+# Vite & Development Cache
+.vite/
+.cache/
+
+# Rust / Cargo / WebAssembly Artifacts
+wasm-engine/target/
+wasm-engine/pkg/
+target/
+pkg/
+**/*.rs.bk
+*.wasm.d.ts
+
+# Environment & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# Logs & Debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Editor & IDE Directories
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary & Test Files
+coverage/
+.nyc_output/
+*.tmp

@@ -3,7 +3,7 @@
  * Grid Renderer (Infinite Canvas Dot-Grid)
  * ==============================================================================
  * Draws a subtle, high-performance dot-matrix grid aligned with camera zoom.
- * Adapts seamlessly between light and dark themes.
+ * Adapts seamlessly between light and dark themes and handles high-DPI viewports.
  */
 
 import { CANVAS_CONFIG } from '../core/constants.js';
@@ -16,12 +16,15 @@ export class GridRenderer {
    * @param {string} theme - 'dark' | 'light'
    */
   render(ctx, camera, theme) {
-    const canvas = camera.canvas;
     const spacing = CANVAS_CONFIG.GRID_SPACING;
+    const vp = camera.getViewportSize();
 
-    // Visible world boundaries
-    const topLeft = camera.screenToWorld(0, 0);
-    const bottomRight = camera.screenToWorld(canvas.width, canvas.height);
+    // Visible world boundaries in CSS viewport pixels
+    const topLeft = camera.screenToWorld(camera.canvas.getBoundingClientRect().left, camera.canvas.getBoundingClientRect().top);
+    const bottomRight = camera.screenToWorld(
+      camera.canvas.getBoundingClientRect().left + vp.width,
+      camera.canvas.getBoundingClientRect().top + vp.height
+    );
 
     const startX = Math.floor(topLeft.x / spacing) * spacing;
     const endX = Math.ceil(bottomRight.x / spacing) * spacing;

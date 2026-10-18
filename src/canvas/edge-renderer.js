@@ -70,11 +70,25 @@ export class EdgeRenderer {
     ctx.beginPath();
     ctx.moveTo(startX, startY);
 
+    const deltaX = currentX - startX;
     const deltaY = currentY - startY;
-    const cp1X = startX;
-    const cp1Y = startY + deltaY * 0.5;
-    const cp2X = currentX;
-    const cp2Y = currentY - deltaY * 0.5;
+
+    let cp1X = startX;
+    let cp1Y = startY;
+    let cp2X = currentX;
+    let cp2Y = currentY;
+
+    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+      const dir = deltaY >= 0 ? 1 : -1;
+      const dist = Math.min(120, Math.max(30, Math.abs(deltaY) * 0.45));
+      cp1Y += dist * dir;
+      cp2Y -= dist * dir;
+    } else {
+      const dir = deltaX >= 0 ? 1 : -1;
+      const dist = Math.min(120, Math.max(30, Math.abs(deltaX) * 0.45));
+      cp1X += dist * dir;
+      cp2X -= dist * dir;
+    }
 
     ctx.bezierCurveTo(cp1X, cp1Y, cp2X, cp2Y, currentX, currentY);
     ctx.strokeStyle = '#6366F1';
@@ -82,11 +96,20 @@ export class EdgeRenderer {
     ctx.setLineDash([5, 4]);
     ctx.stroke();
 
-    // Pulse dot at current mouse position
+    // Pulse dot and glow beacon at current mouse position
     ctx.beginPath();
-    ctx.arc(currentX, currentY, 5, 0, Math.PI * 2);
+    ctx.arc(currentX, currentY, 6, 0, Math.PI * 2);
     ctx.fillStyle = '#6366F1';
+    ctx.shadowColor = '#6366F1';
+    ctx.shadowBlur = 10;
     ctx.fill();
+
+    // Outer target ring
+    ctx.beginPath();
+    ctx.arc(currentX, currentY, 10, 0, Math.PI * 2);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
+    ctx.stroke();
 
     ctx.restore();
   }

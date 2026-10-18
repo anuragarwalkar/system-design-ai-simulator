@@ -10,6 +10,7 @@ import { stateManager } from '../../core/state-manager.js';
 import { historyManager } from '../../core/history-manager.js';
 import { eventBus } from '../../core/event-bus.js';
 import { EVENTS } from '../../core/constants.js';
+import { showConfirmModal, showToast } from '../ui/dialog.js';
 
 export class Toolbar {
   constructor(containerElement, canvasRenderer) {
@@ -95,9 +96,18 @@ export class Toolbar {
 
   _bindEvents() {
     // Reset Canvas
-    this.container.querySelector('#btn-reset').addEventListener('click', () => {
-      if (confirm('Clear the entire canvas and reset architecture?')) {
+    this.container.querySelector('#btn-reset').addEventListener('click', async () => {
+      const confirmed = await showConfirmModal({
+        title: 'Reset Architecture?',
+        message: 'This will clear all components, connection wires, and live traffic from the canvas. You can undo this action with Cmd+Z.',
+        confirmText: 'Reset Canvas',
+        cancelText: 'Cancel',
+        isDanger: true
+      });
+
+      if (confirmed) {
         stateManager.clearGraph();
+        showToast('Canvas reset successfully', 'info');
       }
     });
 
@@ -141,6 +151,7 @@ export class Toolbar {
       a.download = `system-design-architecture-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
+      showToast('Architecture exported to JSON', 'success');
     });
 
     // Import JSON
@@ -156,8 +167,9 @@ export class Toolbar {
           if (parsed.targetRps) {
             stateManager.updateSimConfig({ target_rps: parsed.targetRps });
           }
+          showToast('Architecture loaded successfully', 'success');
         } catch (err) {
-          alert('Failed to parse architecture JSON file: ' + err.message);
+          showToast('Failed to parse architecture JSON: ' + err.message, 'error');
         }
       };
       reader.readAsText(file);

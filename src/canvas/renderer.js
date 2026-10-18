@@ -35,6 +35,7 @@ export class CanvasRenderer {
     // Interaction states
     this.hoveredPort = null;
     this.connectingWire = null; // { startX, startY, currentX, currentY, sourceNodeId, sourceSide }
+    this.hoveredTargetNodeId = null;
 
     this.isRunning = false;
     this._rafId = null;
@@ -137,14 +138,15 @@ export class CanvasRenderer {
     const theme = stateManager.theme;
     const isDark = theme === 'dark';
 
-    // 1. Clear background
     const dpr = window.devicePixelRatio || 1;
-    const cssWidth = canvas.width / dpr;
-    const cssHeight = canvas.height / dpr;
+    const vp = this.camera.getViewportSize();
 
-    ctx.save();
+    // Reset transform to DPR baseline to eliminate any sub-pixel drift
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // 1. Clear background
     ctx.fillStyle = isDark ? '#13151F' : '#F8FAFC';
-    ctx.fillRect(0, 0, cssWidth, cssHeight);
+    ctx.fillRect(0, 0, vp.width, vp.height);
 
     // 2. Render dot grid
     this.gridRenderer.render(ctx, this.camera, theme);
@@ -195,22 +197,26 @@ export class CanvasRenderer {
       const isSelected = stateManager.selectedNodeId === node.id;
       const metrics = simReport && simReport.node_metrics ? simReport.node_metrics[node.id] : null;
       const isSpof = spofSet.has(node.id);
+      const isConnectTarget = this.hoveredTargetNodeId === node.id;
+      const isWireActive = !!this.connectingWire;
+      const sourceNodeId = this.connectingWire ? this.connectingWire.sourceNodeId : null;
 
       this.nodeRenderer.renderNode(ctx, node, {
         isSelected,
         metrics,
         isSpof,
         theme,
-        hoveredPort: this.hoveredPort
+        hoveredPort: this.hoveredPort,
+        isConnectTarget,
+        isWireActive,
+        sourceNodeId
       });
     }
 
     ctx.restore(); // Restore world camera transform
 
     // 8. Render HUD: FPS and status badge in corner
-    this._renderHud(ctx, cssWidth, cssHeight, isDark);
-
-    ctx.restore();
+    this._renderHud(ctx, vp.width, vp.height, isDark);
   }
 
   _renderHud(ctx, width, height, isDark) {

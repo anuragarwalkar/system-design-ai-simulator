@@ -9,6 +9,7 @@
 import { langChainAgent } from '../../ai/langchain-agent.js';
 import { eventBus } from '../../core/event-bus.js';
 import { EVENTS } from '../../core/constants.js';
+import { showToast } from '../ui/dialog.js';
 
 export class AiChatPanel {
   constructor(containerElement) {
@@ -126,7 +127,7 @@ export class AiChatPanel {
       langChainAgent.setEndpoint(endpoint);
 
       settingsCard.style.display = 'none';
-      alert('API settings saved successfully!');
+      showToast('AI API configuration saved successfully!', 'success');
     });
 
     // Send on click

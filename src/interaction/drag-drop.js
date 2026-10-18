@@ -62,6 +62,12 @@ export class DragDropEngine {
     if (e.button !== 0) return; // Only handle primary left click
 
     const world = this.camera.screenToWorld(e.clientX, e.clientY);
+
+    // If clicking near a port or if a connection wire is active, let ConnectionHandler take priority!
+    if (this._findPortNear(world.x, world.y, 20) || this.renderer.connectingWire) {
+      return;
+    }
+
     const clickedNode = this._findNodeAt(world.x, world.y);
 
     if (clickedNode) {
@@ -209,6 +215,18 @@ export class DragDropEngine {
 
         if (Math.hypot(worldX - x, worldY - y) < 14) {
           return edge;
+        }
+      }
+    }
+    return null;
+  }
+
+  _findPortNear(worldX, worldY, maxDist = 20) {
+    for (const node of stateManager.nodes.values()) {
+      const ports = this.renderer.nodeRenderer.getNodePorts(node);
+      for (const p of ports) {
+        if (Math.hypot(worldX - p.x, worldY - p.y) <= maxDist) {
+          return p;
         }
       }
     }
