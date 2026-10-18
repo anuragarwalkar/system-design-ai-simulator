@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="High-Performance 60FPS System Design Simulator powered by WebAssembly, HTML5 Canvas, and AI LangChain" />
+  <title>SysDesign AI Simulator — Interactive 60FPS WebAssembly Simulator</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script type="module" crossorigin src="./assets/index-QXW8or4v.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CMxAfhrx.css">
+</head>
+<body>
+  <div class="app-root">
+    <!-- Top Action Toolbar -->
+    <header class="app-header" id="app-header"></header>
+
+    <!-- Main Workspace -->
+    <main class="app-workspace">
+      <!-- Left Sidebar: Component Palette & Interview Scenarios -->
+      <aside class="app-sidebar" id="app-sidebar"></aside>
+
+      <!-- Central Canvas Viewport -->
+      <section class="canvas-container" id="canvas-container">
+        <canvas class="sim-canvas" id="sim-canvas"></canvas>
+
+        <!-- Top-floating Telemetry HUD -->
+        <div class="floating-metrics-hud" id="metrics-hud"></div>
+
+        <!-- Bottom-right floating Synthetic Load Injector -->
+        <div class="floating-load-hud" id="load-hud"></div>
+      </section>
+
+      <!-- Right Sidebar: Selected Node Inspector -->
+      <aside class="app-inspector" id="app-inspector"></aside>
+    </main>
+
+    <!-- Slide-over Panels -->
+    <div id="ai-panel-container"></div>
+    <div id="eval-panel-container"></div>
+  </div>
+
+</body>
+</html>
