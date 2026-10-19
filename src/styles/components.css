@@ -128,7 +128,7 @@
 .component-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .component-card {
@@ -1081,69 +1081,176 @@
   white-space: nowrap;
 }
 
-/* CLOUD BRAND FILTER BAR */
-.brand-filter-bar {
+.sidebar-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.sidebar-section-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* CLEAN & SIMPLE COMPONENT PALETTE CARD */
+.component-clean-card {
   display: flex;
   align-items: center;
-  gap: 5px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  margin-bottom: 10px;
-  scrollbar-width: none;
+  gap: 12px;
+  padding: 10px 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.brand-filter-bar::-webkit-scrollbar {
-  display: none;
+.component-clean-card:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
 }
 
-.brand-filter-pill {
-  flex-shrink: 0;
-  display: inline-flex;
+.component-clean-card:active {
+  cursor: grabbing;
+  transform: translateY(0);
+}
+
+.component-clean-card.dragging {
+  opacity: 0.45;
+  transform: scale(0.97);
+}
+
+.component-clean-card .component-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
   align-items: center;
-  padding: 3px 9px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.component-clean-card:hover .component-icon-badge {
+  transform: scale(1.06);
+}
+
+.component-clean-card .component-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.component-clean-card .component-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 20px;
+}
+
+.component-clean-card .component-name {
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.component-model-select-compact {
+  width: 100%;
+  height: 28px;
+  font-size: 11.5px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  line-height: 26px;
+  padding: 0 24px 0 8px;
+  border-radius: 6px;
   background-color: var(--bg-surface-alt);
   border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.16s ease;
-  user-select: none;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 7px) center;
+  background-size: 11px 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: all 0.15s ease;
 }
 
-.brand-filter-pill:hover {
-  color: var(--text-primary);
-  border-color: var(--border-medium);
+.component-model-select-compact:hover {
   background-color: var(--bg-surface);
+  border-color: var(--border-medium);
+  color: var(--text-primary);
 }
 
-.brand-filter-pill.active {
-  color: #FFFFFF;
-  background-color: var(--brand-accent, var(--accent-primary));
-  border-color: transparent;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+.component-model-select-compact:focus {
+  background-color: var(--bg-surface);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+  color: var(--text-primary);
+}
+
+.component-model-select-compact optgroup {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text-muted);
+  background-color: var(--bg-surface-alt);
+  padding: 4px 6px;
+}
+
+.component-model-select-compact option {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  padding: 5px 8px;
+}
+
+[data-theme="dark"] .component-model-select-compact {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 
 .btn-component-learn {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  background-color: rgba(99, 102, 241, 0.12);
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: rgba(99, 102, 241, 0.08);
   color: var(--accent-primary);
-  font-size: 10px;
-  font-weight: 600;
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  transition: all 0.15s ease;
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  padding: 0;
+  flex-shrink: 0;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .btn-component-learn:hover {
   background-color: var(--accent-primary);
   color: #FFFFFF;
-  transform: scale(1.04);
+  border-color: var(--accent-primary);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px var(--accent-glow);
 }
 
 /* Scenario Card Enhancements */

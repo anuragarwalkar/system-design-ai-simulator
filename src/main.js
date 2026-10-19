@@ -57,7 +57,9 @@ async function bootstrap() {
   new MetricsDashboard(metricsHudContainer);
 
   const loadHudContainer = document.getElementById('load-hud');
-  new LoadInjector(loadHudContainer);
+  if (loadHudContainer) {
+    new LoadInjector(loadHudContainer);
+  }
 
   const aiPanelContainer = document.getElementById('ai-panel-container');
   new AiChatPanel(aiPanelContainer);

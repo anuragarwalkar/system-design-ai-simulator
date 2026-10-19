@@ -2,11 +2,13 @@
  * ==============================================================================
  * Component Palette & Scenarios Sidebar
  * ==============================================================================
- * Displays draggable & tappable infrastructure components with icon badges,
- * alongside sorted interview practice scenarios. Fully optimized for touch & mobile.
+ * Displays draggable & tappable infrastructure components with a clean,
+ * simple, uncluttered UX. Each component displays its role and an inline
+ * brand-grouped model selector (AWS, Cloudflare, OSS, GCP, etc.).
+ * Fully optimized for touch & mobile.
  */
 
-import { COMPONENT_METADATA, EVENTS, COMPONENT_MODELS, BRAND_PROVIDERS } from '../../core/constants.js';
+import { COMPONENT_METADATA, EVENTS, COMPONENT_MODELS, BRAND_PROVIDERS, COMPONENT_ICONS_SVG } from '../../core/constants.js';
 import { SCENARIOS } from '../../ai/scenarios.js';
 import { stateManager } from '../../core/state-manager.js';
 import { historyManager } from '../../core/history-manager.js';
@@ -18,7 +20,16 @@ export class ComponentPalette {
   constructor(containerElement, canvasRenderer) {
     this.container = containerElement;
     this.renderer = canvasRenderer;
-    this.selectedBrandFilter = 'ALL';
+
+    // Per-component selected model tracking (defaults to first model)
+    this.selectedModels = {};
+    for (const type of Object.keys(COMPONENT_METADATA)) {
+      const models = COMPONENT_MODELS[type] || [];
+      this.selectedModels[type] = {
+        modelId: models[0]?.id || null
+      };
+    }
+
     this.render();
   }
 
@@ -34,7 +45,7 @@ export class ComponentPalette {
         </div>
       </div>
 
-      <!-- Traffic Simulation Section (Moved from canvas to left panel) -->
+      <!-- Traffic Simulation Section -->
       <div class="sidebar-load-section">
         <div class="sidebar-section-header">
           <h3 class="section-title">Traffic Simulation</h3>
@@ -48,55 +59,7 @@ export class ComponentPalette {
         <h3 class="section-title">Infrastructure Components</h3>
       </div>
 
-      <!-- Cloud Brand Filter Pills -->
-      <div class="brand-filter-bar">
-        <button class="brand-filter-pill ${this.selectedBrandFilter === 'ALL' ? 'active' : ''}" data-brand="ALL">All Models</button>
-        <button class="brand-filter-pill ${this.selectedBrandFilter === 'AWS' ? 'active' : ''}" data-brand="AWS" style="--brand-accent: #FF9900;">AWS</button>
-        <button class="brand-filter-pill ${this.selectedBrandFilter === 'Cloudflare' ? 'active' : ''}" data-brand="Cloudflare" style="--brand-accent: #F38020;">Cloudflare</button>
-        <button class="brand-filter-pill ${this.selectedBrandFilter === 'OSS' ? 'active' : ''}" data-brand="OSS" style="--brand-accent: #10B981;">Open Source</button>
-        <button class="brand-filter-pill ${this.selectedBrandFilter === 'GCP' ? 'active' : ''}" data-brand="GCP" style="--brand-accent: #4285F4;">GCP</button>
-      </div>
-
-      <div class="component-list" id="component-list">
-        ${Object.entries(COMPONENT_METADATA).map(([type, meta]) => {
-          const models = COMPONENT_MODELS[type] || [];
-          const activeModel = (this.selectedBrandFilter !== 'ALL'
-            ? models.find(m => m.brand === this.selectedBrandFilter)
-            : null) || models[0] || null;
-
-          const displayName = activeModel ? activeModel.name : meta.name;
-          const displayDesc = activeModel ? activeModel.description : meta.description;
-          const brandShort = activeModel ? activeModel.brandInfo.shortName : '';
-          const brandColor = activeModel ? activeModel.brandInfo.color : '#64748B';
-          const brandBg = activeModel ? activeModel.brandInfo.bg : 'rgba(100, 116, 139, 0.15)';
-          const modelId = activeModel ? activeModel.id : '';
-
-          return `
-            <div class="component-card" draggable="true" data-type="${type}" data-model-id="${modelId}" role="button" tabindex="0" title="Tap to add ${displayName} to canvas">
-              <div class="component-icon-badge" style="background: ${meta.accentBg}; color: ${meta.color};">
-                <span class="component-dot" style="background: ${meta.color};"></span>
-              </div>
-              <div class="component-info">
-                <div class="component-name-row">
-                  <span class="component-name">${displayName}</span>
-                  <div class="component-card-badges">
-                    ${brandShort && brandShort !== 'Standard' ? `
-                      <span class="brand-badge-pill" style="color: ${brandColor}; background: ${brandBg}; border-color: ${brandColor};">
-                        ${brandShort}
-                      </span>
-                    ` : ''}
-                    <button class="btn-component-learn" data-type="${type}" title="Learn about ${displayName}">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                      <span>Learn</span>
-                    </button>
-                  </div>
-                </div>
-                <div class="component-desc">${displayDesc}</div>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
+      <div class="component-list" id="component-list"></div>
 
       <div class="palette-section-divider"></div>
 
@@ -163,8 +126,62 @@ export class ComponentPalette {
     `;
 
     this._bindCloseButton();
-    this._bindDragAndClickEvents();
+    this.renderComponentList();
     this._bindScenarioEvents();
+  }
+
+  renderComponentList() {
+    const listContainer = this.container.querySelector('#component-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = Object.entries(COMPONENT_METADATA).map(([type, meta]) => {
+      const models = COMPONENT_MODELS[type] || [];
+      const selState = this.selectedModels[type] || { modelId: models[0]?.id || null };
+      const activeModelId = selState.modelId || models[0]?.id || '';
+
+      // Group models by brand for clean, readable optgroups
+      const brandGroups = {};
+      for (const m of models) {
+        const brandName = m.brandInfo?.name || m.brand || 'Standard';
+        if (!brandGroups[brandName]) {
+          brandGroups[brandName] = [];
+        }
+        brandGroups[brandName].push(m);
+      }
+
+      return `
+        <div class="component-clean-card" draggable="true" data-type="${type}" data-model-id="${activeModelId}" role="button" tabindex="0" title="Tap or drag to add ${meta.name} to canvas">
+          <div class="component-icon-badge" style="background: ${meta.accentBg}; color: ${meta.color};">
+            ${COMPONENT_ICONS_SVG[type] || `<span class="component-dot" style="background: ${meta.color};"></span>`}
+          </div>
+          <div class="component-info">
+            <div class="component-name-row">
+              <span class="component-name">${meta.name}</span>
+              <button class="btn-component-learn" data-type="${type}" title="Learn about ${meta.name}" aria-label="Learn about ${meta.name}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              </button>
+            </div>
+            ${models.length > 0 ? `
+              <select class="component-model-select-compact" data-type="${type}" title="Choose engine model">
+                ${Object.entries(brandGroups).map(([brandName, brandModels]) => `
+                  <optgroup label="${brandName}">
+                    ${brandModels.map(m => `
+                      <option value="${m.id}" ${m.id === activeModelId ? 'selected' : ''}>
+                        ${m.name}
+                      </option>
+                    `).join('')}
+                  </optgroup>
+                `).join('')}
+              </select>
+            ` : `
+              <div class="component-desc">${meta.description}</div>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    this._bindComponentListEvents();
   }
 
   _bindCloseButton() {
@@ -181,23 +198,35 @@ export class ComponentPalette {
     if (backdrop) backdrop.classList.remove('active');
   }
 
-  _bindDragAndClickEvents() {
-    // Brand filter pill tabs
-    const brandPills = this.container.querySelectorAll('.brand-filter-pill');
-    brandPills.forEach(pill => {
-      pill.addEventListener('click', (e) => {
+  _bindComponentListEvents() {
+    // 1. Model select dropdown change
+    const modelSelects = this.container.querySelectorAll('.component-model-select-compact');
+    modelSelects.forEach(select => {
+      // Prevent clicking the dropdown from triggering card click (which adds node)
+      select.addEventListener('click', (e) => {
         e.stopPropagation();
-        const brand = pill.getAttribute('data-brand');
-        if (this.selectedBrandFilter !== brand) {
-          this.selectedBrandFilter = brand;
-          this.render();
+      });
+
+      select.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const type = select.getAttribute('data-type');
+        const modelId = select.value;
+        if (!type) return;
+
+        this.selectedModels[type] = this.selectedModels[type] || {};
+        this.selectedModels[type].modelId = modelId;
+
+        // Update card data-model-id
+        const card = select.closest('.component-clean-card');
+        if (card) {
+          card.setAttribute('data-model-id', modelId);
         }
       });
     });
 
-    const cards = this.container.querySelectorAll('.component-card');
+    // 2. Drag & Drop on component cards
+    const cards = this.container.querySelectorAll('.component-clean-card');
     cards.forEach(card => {
-      // HTML5 Drag for desktop
       card.addEventListener('dragstart', (e) => {
         const type = card.getAttribute('data-type');
         const modelId = card.getAttribute('data-model-id') || '';
@@ -213,23 +242,23 @@ export class ComponentPalette {
         card.classList.remove('dragging');
       });
 
-      // Tap-to-add for mobile & convenience on desktop
+      // Tap or Click card to add to canvas
       card.addEventListener('click', (e) => {
-        // Ignore if clicking the Learn button
-        if (e.target.closest('.btn-component-learn')) return;
+        if (e.target.closest('.btn-component-learn') || e.target.closest('.component-model-select-compact')) return;
         const type = card.getAttribute('data-type');
         const modelId = card.getAttribute('data-model-id') || '';
         this.addNodeToCanvas(type, modelId);
       });
     });
 
-    // Learn info buttons on component cards
+    // 3. Learn info modal button
     const learnButtons = this.container.querySelectorAll('.btn-component-learn');
     learnButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const type = btn.getAttribute('data-type');
-        showConceptModal(type, (t) => this.addNodeToCanvas(t));
+        const selModelId = this.selectedModels[type]?.modelId || null;
+        showConceptModal(type, (t) => this.addNodeToCanvas(t, selModelId));
       });
     });
   }
@@ -326,4 +355,3 @@ export class ComponentPalette {
     });
   }
 }
-

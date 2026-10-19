@@ -12,7 +12,7 @@
 
 import { stateManager } from '../../core/state-manager.js';
 import { eventBus } from '../../core/event-bus.js';
-import { EVENTS, COMPONENT_METADATA, COMPONENT_TYPES, PROTOCOLS_METADATA, COMPONENT_MODELS, BRAND_PROVIDERS } from '../../core/constants.js';
+import { EVENTS, COMPONENT_METADATA, COMPONENT_TYPES, PROTOCOLS_METADATA, COMPONENT_MODELS, BRAND_PROVIDERS, getComponentBrands, getModelsForBrand, COMPONENT_ICONS_SVG } from '../../core/constants.js';
 
 export class ConfigPanel {
   constructor(containerElement) {
@@ -102,12 +102,15 @@ export class ConfigPanel {
     const config = node.config || {};
     const models = COMPONENT_MODELS[node.component_type] || [];
     const currentModel = models.find(m => m.id === node.model_id) || models[0] || null;
+    const brands = getComponentBrands(node.component_type);
+    const activeBrand = currentModel ? currentModel.brand : (brands[0]?.brand || 'AWS');
+    const brandModels = getModelsForBrand(node.component_type, activeBrand);
 
     this.container.innerHTML = `
       <div class="config-header">
         <div class="config-title-row">
           <div class="component-icon-badge" style="background: ${meta.accentBg}; color: ${meta.color};">
-            <span class="component-dot" style="background: ${meta.color};"></span>
+            ${COMPONENT_ICONS_SVG[node.component_type] || `<span class="component-dot" style="background: ${meta.color};"></span>`}
           </div>
           <div class="config-title-wrap">
             <input type="text" id="node-name-input" class="node-name-field" value="${node.name}" title="Edit Name" />
@@ -144,69 +147,85 @@ export class ConfigPanel {
 
       <div class="config-body">
         <!-- Cloud Provider & Technology Model Selection Card -->
-        <div class="brand-model-selector-card">
-          <div class="brand-model-header">
-            <span class="brand-model-title">🏷️ Cloud Model / Brand</span>
-            ${currentModel ? `
-              <span class="brand-badge-pill" style="color: ${currentModel.brandInfo.color}; background: ${currentModel.brandInfo.bg}; border-color: ${currentModel.brandInfo.color};">
-                ${currentModel.brand}
-              </span>
-            ` : ''}
-          </div>
-          <div class="form-group" style="margin-bottom: 6px;">
-            <label class="form-label">Select Technology Engine</label>
-            <select class="form-select brand-model-select" id="node-model-select">
-              ${models.map(m => `
-                <option value="${m.id}" ${m.id === (node.model_id || models[0]?.id) ? 'selected' : ''}>
-                  ${m.name} [${m.brand}]
-                </option>
-              `).join('')}
-            </select>
-          </div>
+        ${models.length > 0 ? `
+          <div class="brand-model-selector-card">
+            <div class="brand-model-header">
+              <span class="brand-model-title">🏷️ Brand & Technology Model</span>
+              ${currentModel ? `
+                <span class="brand-badge-pill" style="color: ${currentModel.brandInfo.color}; background: ${currentModel.brandInfo.bg}; border-color: ${currentModel.brandInfo.color};">
+                  ${currentModel.brand}
+                </span>
+              ` : ''}
+            </div>
 
-          ${currentModel ? `
-            <div class="model-highlights-box">
-              <div class="model-desc">${currentModel.description}</div>
-              <div class="model-highlights">
-                <strong>✨ Highlights:</strong> ${currentModel.highlights}
-              </div>
-              <div class="model-specs-row">
-                <span>Cap: <strong>${(currentModel.baseRps / 1000).toFixed(0)}k RPS</strong></span>
-                <span>Latency: <strong>${currentModel.baseLatencyMs}ms</strong></span>
-                <span>Est: <strong>$${(currentModel.hourlyCost * 730).toFixed(0)}/mo</strong></span>
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label class="form-label">Brand / Provider</label>
+              <div class="inspector-brand-chips">
+                ${brands.map(b => `
+                  <button type="button" class="inspector-brand-chip ${b.brand === activeBrand ? 'active' : ''}" data-brand="${b.brand}" style="--chip-color: ${b.color}; --chip-bg: ${b.bg};" title="${b.name}">
+                    ${b.shortName}
+                  </button>
+                `).join('')}
               </div>
             </div>
-          ` : ''}
-        </div>
+
+            <div class="form-group" style="margin-bottom: 6px;">
+              <label class="form-label">Technology Engine (${brandModels.length})</label>
+              <select class="form-select brand-model-select" id="node-model-select">
+                ${brandModels.map(m => `
+                  <option value="${m.id}" ${m.id === currentModel?.id ? 'selected' : ''}>
+                    ${m.name}
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+
+            ${currentModel ? `
+              <div class="model-highlights-box">
+                <div class="model-desc">${currentModel.description}</div>
+                <div class="model-highlights">
+                  <strong>✨ Highlights:</strong> ${currentModel.highlights}
+                </div>
+                <div class="model-specs-row">
+                  <span>Cap: <strong>${(currentModel.baseRps / 1000).toFixed(0)}k RPS</strong></span>
+                  <span>Latency: <strong>${currentModel.baseLatencyMs}ms</strong></span>
+                  <span>Est: <strong>$${(currentModel.hourlyCost * 730).toFixed(0)}/mo</strong></span>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
 
         <!-- Dynamic Form by Component Type -->
         ${this._renderTypeSpecificForms(node.component_type, config)}
 
-        <!-- Beginner System Design Concept Card -->
+        <!-- Beginner System Design Concept Card (Collapsible) -->
         ${meta.concept ? `
           <div class="concept-explainer-card">
-            <div class="concept-explainer-header">
-              <span class="concept-icon">💡</span>
-              <span class="concept-heading">Concept Breakdown</span>
-            </div>
-            <div class="concept-analogy">
-              <strong>Analogy:</strong> ${meta.concept.analogy}
-            </div>
-            <div class="concept-body-text">
-              ${meta.concept.whatItDoes}
-            </div>
-            <div class="concept-tradeoff-box">
-              <span class="tradeoff-icon">⚠️</span>
-              <span class="tradeoff-text"><strong>Trade-off:</strong> ${meta.concept.keyTradeoffs}</span>
-            </div>
-            <div class="concept-interview-tip">
-              <strong>🎯 Interview Tip:</strong> ${meta.concept.interviewTip}
-            </div>
-            ${meta.concept.industryExamples ? `
-              <div class="concept-examples">
-                <strong>Real-World:</strong> ${meta.concept.industryExamples}
+            <button type="button" class="btn-toggle-concept" id="btn-toggle-concept">
+              <span>💡 Concept & Interview Tips</span>
+              <span class="concept-chevron">▾</span>
+            </button>
+            <div class="concept-explainer-drawer" id="concept-drawer" style="display: none;">
+              <div class="concept-analogy">
+                <strong>Analogy:</strong> ${meta.concept.analogy}
               </div>
-            ` : ''}
+              <div class="concept-body-text">
+                ${meta.concept.whatItDoes}
+              </div>
+              <div class="concept-tradeoff-box">
+                <span class="tradeoff-icon">⚠️</span>
+                <span class="tradeoff-text"><strong>Trade-off:</strong> ${meta.concept.keyTradeoffs}</span>
+              </div>
+              <div class="concept-interview-tip">
+                <strong>🎯 Interview Tip:</strong> ${meta.concept.interviewTip}
+              </div>
+              ${meta.concept.industryExamples ? `
+                <div class="concept-examples">
+                  <strong>Real-World:</strong> ${meta.concept.industryExamples}
+                </div>
+              ` : ''}
+            </div>
           </div>
         ` : ''}
 
@@ -351,12 +370,26 @@ export class ConfigPanel {
       });
     }
 
-    // Technology Model & Brand Selector
+    // Brand Selection Chips
+    const brandChips = this.container.querySelectorAll('.inspector-brand-chip');
+    brandChips.forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.preventDefault();
+        const brand = chip.getAttribute('data-brand');
+        const brandModels = getModelsForBrand(node.component_type, brand);
+        if (brandModels.length > 0) {
+          stateManager.updateNodeModel(node.id, brandModels[0].id, true);
+          this.renderNodeConfig(node);
+        }
+      });
+    });
+
+    // Technology Model Selector
     const modelSelect = this.container.querySelector('#node-model-select');
     if (modelSelect) {
       modelSelect.addEventListener('change', (e) => {
         const selectedModelId = e.target.value;
-        stateManager.updateNodeModel(node.id, selectedModelId, false);
+        stateManager.updateNodeModel(node.id, selectedModelId, true);
         this.renderNodeConfig(node);
       });
     }
@@ -365,6 +398,17 @@ export class ConfigPanel {
     const closeBtn = this.container.querySelector('#btn-close-config');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => stateManager.clearSelection());
+    }
+
+    // Toggle Concept breakdown drawer
+    const conceptBtn = this.container.querySelector('#btn-toggle-concept');
+    const conceptDrawer = this.container.querySelector('#concept-drawer');
+    if (conceptBtn && conceptDrawer) {
+      conceptBtn.addEventListener('click', () => {
+        const isHidden = conceptDrawer.style.display === 'none';
+        conceptDrawer.style.display = isHidden ? 'flex' : 'none';
+        conceptBtn.classList.toggle('expanded', isHidden);
+      });
     }
 
     // Delete button

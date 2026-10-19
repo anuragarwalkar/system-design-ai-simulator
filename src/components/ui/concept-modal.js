@@ -6,7 +6,7 @@
  * with simple analogies, interview tips, trade-offs, and industry examples.
  */
 
-import { COMPONENT_METADATA } from '../../core/constants.js';
+import { COMPONENT_METADATA, COMPONENT_ICONS_SVG } from '../../core/constants.js';
 
 export function showConceptModal(componentType, onAdd = null) {
   const meta = COMPONENT_METADATA[componentType];
@@ -34,7 +34,7 @@ export function showConceptModal(componentType, onAdd = null) {
       <div class="concept-modal-header">
         <div class="concept-header-left">
           <div class="component-icon-badge large" style="background: ${meta.accentBg}; color: ${meta.color};">
-            <span class="component-dot" style="background: ${meta.color};"></span>
+            ${COMPONENT_ICONS_SVG[componentType] || `<span class="component-dot" style="background: ${meta.color};"></span>`}
           </div>
           <div>
             <div class="concept-modal-title">${meta.name}</div>

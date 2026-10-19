@@ -172,6 +172,17 @@ export const COMPONENT_METADATA = {
   }
 };
 
+export const COMPONENT_ICONS_SVG = {
+  client: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  load_balancer: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9"/><path d="M12 12v3"/></svg>`,
+  api_gateway: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>`,
+  microservice: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>`,
+  cache: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  database: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+  message_queue: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+  cdn: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`
+};
+
 export const BRAND_PROVIDERS = {
   AWS: { name: 'AWS (Amazon Web Services)', shortName: 'AWS', color: '#FF9900', bg: 'rgba(255, 153, 0, 0.16)' },
   CLOUDFLARE: { name: 'Cloudflare', shortName: 'Cloudflare', color: '#F38020', bg: 'rgba(243, 128, 32, 0.16)' },
@@ -297,6 +308,28 @@ export const COMPONENT_MODELS = {
       hourlyCost: 0.06,
       description: 'Dedicated high-availability TCP/HTTP load balancer renowned for reliability.',
       highlights: 'Deep health-checking, granular queue management, connection rate limiting, and transparent proxying.'
+    },
+    {
+      id: 'gcp-cloud-lb',
+      name: 'Google Cloud Load Balancing',
+      brand: 'GCP',
+      brandInfo: BRAND_PROVIDERS.GCP,
+      baseRps: 500000,
+      baseLatencyMs: 1.5,
+      hourlyCost: 0.08,
+      description: 'Global Anycast external HTTP(S) proxy load balancer spanning Google\'s worldwide fiber network.',
+      highlights: 'Single Anycast IP worldwide, integrated Cloud Armor DDoS/WAF protection, instant auto-scaling to millions of RPS without pre-warming.'
+    },
+    {
+      id: 'traefik-proxy',
+      name: 'Traefik Cloud Native Proxy',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 180000,
+      baseLatencyMs: 1.4,
+      hourlyCost: 0.05,
+      description: 'Modern HTTP reverse proxy and load balancer designed for microservices and container orchestrators.',
+      highlights: 'Automatic dynamic configuration discovery from Docker/K8s, Let\'s Encrypt automatic TLS certificates, built-in dashboard metrics.'
     }
   ],
   [COMPONENT_TYPES.CACHE]: [
@@ -321,6 +354,17 @@ export const COMPONENT_MODELS = {
       hourlyCost: 0.25,
       description: 'Fully managed Redis service with automated Multi-AZ failover and cluster sharding.',
       highlights: 'Zero-management patching, automatic read-replica scaling across Availability Zones, encrypted at rest and in transit.'
+    },
+    {
+      id: 'gcp-memorystore',
+      name: 'Google Cloud Memorystore (Redis)',
+      brand: 'GCP',
+      brandInfo: BRAND_PROVIDERS.GCP,
+      baseRps: 140000,
+      baseLatencyMs: 1.1,
+      hourlyCost: 0.24,
+      description: 'Fully managed in-memory data store service for Redis on Google Cloud Platform.',
+      highlights: 'Sub-millisecond latency, automated high availability with cross-zone failover, VPC peering security, Cloud Monitoring metrics.'
     },
     {
       id: 'memcached',
@@ -356,6 +400,17 @@ export const COMPONENT_MODELS = {
       hourlyCost: 0.48,
       description: 'Cloud-native distributed relational database with 6-way storage replication across 3 AZs.',
       highlights: 'ACID transactions, complex SQL joins, up to 15 auto-scaling read replicas with sub-10ms replica lag.'
+    },
+    {
+      id: 'gcp-cloud-spanner',
+      name: 'Google Cloud Spanner',
+      brand: 'GCP',
+      brandInfo: BRAND_PROVIDERS.GCP,
+      baseRps: 25000,
+      baseLatencyMs: 8.0,
+      hourlyCost: 0.90,
+      description: 'Globally distributed relational database service providing external consistency and 99.999% SLA.',
+      highlights: 'TrueTime atomic clock synchronization, unlimited horizontal SQL scale, zero maintenance downtime, automatic multi-region sharding.'
     },
     {
       id: 'dynamodb',
@@ -718,3 +773,37 @@ export const TRAFFIC_PROFILES = {
   SINUSOIDAL: 'Sinusoidal',
   STRESS_TEST: 'Stress Test'
 };
+
+/**
+ * Retrieve unique brand providers available for a component type
+ * @param {string} componentType
+ * @returns {Array<{brand: string, name: string, shortName: string, color: string, bg: string}>}
+ */
+export function getComponentBrands(componentType) {
+  const models = COMPONENT_MODELS[componentType] || [];
+  const brands = [];
+  const seen = new Set();
+  for (const m of models) {
+    if (m.brand && !seen.has(m.brand)) {
+      seen.add(m.brand);
+      brands.push({
+        brand: m.brand,
+        ...(m.brandInfo || BRAND_PROVIDERS.GENERIC)
+      });
+    }
+  }
+  return brands;
+}
+
+/**
+ * Retrieve models for a component type, optionally filtered by brand
+ * @param {string} componentType
+ * @param {string} [brand]
+ * @returns {Array<Object>}
+ */
+export function getModelsForBrand(componentType, brand = null) {
+  const models = COMPONENT_MODELS[componentType] || [];
+  if (!brand || brand === 'ALL') return models;
+  return models.filter(m => m.brand === brand);
+}
+

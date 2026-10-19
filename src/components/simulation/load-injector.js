@@ -21,6 +21,7 @@ export class LoadInjector {
   }
 
   render() {
+    if (!this.container) return;
     const isRunning = stateManager.simConfig.isRunning;
     const rps = stateManager.simConfig.target_rps;
 
