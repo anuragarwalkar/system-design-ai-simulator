@@ -610,7 +610,7 @@ export const COMPONENT_MODELS = {
     {
       id: 'web-browser',
       name: 'Web Browser (React/Next.js)',
-      brand: 'Web',
+      brand: 'Standard',
       brandInfo: BRAND_PROVIDERS.GENERIC,
       baseRps: 1000000,
       baseLatencyMs: 0,
@@ -621,7 +621,7 @@ export const COMPONENT_MODELS = {
     {
       id: 'mobile-app',
       name: 'Mobile App (iOS / Android)',
-      brand: 'Mobile',
+      brand: 'Standard',
       brandInfo: BRAND_PROVIDERS.GENERIC,
       baseRps: 1000000,
       baseLatencyMs: 0,
@@ -632,7 +632,7 @@ export const COMPONENT_MODELS = {
     {
       id: 'iot-device',
       name: 'IoT Sensor Fleet',
-      brand: 'IoT',
+      brand: 'Standard',
       brandInfo: BRAND_PROVIDERS.GENERIC,
       baseRps: 500000,
       baseLatencyMs: 0,
@@ -643,7 +643,7 @@ export const COMPONENT_MODELS = {
     {
       id: 'b2b-webhook',
       name: 'B2B Partner Webhook / API',
-      brand: 'B2B',
+      brand: 'Standard',
       brandInfo: BRAND_PROVIDERS.GENERIC,
       baseRps: 200000,
       baseLatencyMs: 0,

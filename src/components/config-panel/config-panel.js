@@ -103,8 +103,9 @@ export class ConfigPanel {
     const models = COMPONENT_MODELS[node.component_type] || [];
     const currentModel = models.find(m => m.id === node.model_id) || models[0] || null;
     const brands = getComponentBrands(node.component_type);
-    const activeBrand = currentModel ? currentModel.brand : (brands[0]?.brand || 'AWS');
-    const brandModels = getModelsForBrand(node.component_type, activeBrand);
+    const hasMultipleBrands = brands.length > 1;
+    const activeBrand = (hasMultipleBrands && currentModel) ? currentModel.brand : (brands[0]?.brand || 'Standard');
+    const brandModels = hasMultipleBrands ? getModelsForBrand(node.component_type, activeBrand) : models;
 
     this.container.innerHTML = `
       <div class="config-header">
@@ -116,9 +117,9 @@ export class ConfigPanel {
             <input type="text" id="node-name-input" class="node-name-field" value="${node.name}" title="Edit Name" />
             <div class="config-type-row">
               <span class="config-type-badge">${meta.name || node.component_type}</span>
-              ${currentModel ? `
-                <span class="brand-badge-pill" style="color: ${currentModel.brandInfo.color}; background: ${currentModel.brandInfo.bg}; border-color: ${currentModel.brandInfo.color};">
-                  ${currentModel.brandInfo.shortName}
+              ${currentModel && currentModel.brand !== 'Standard' && currentModel.brand !== 'Generic' ? `
+                <span class="brand-badge-pill" style="color: ${currentModel.brandInfo?.color || 'currentColor'}; background: ${currentModel.brandInfo?.bg || 'transparent'}; border-color: ${currentModel.brandInfo?.color || 'currentColor'};">
+                  ${currentModel.brandInfo?.shortName || currentModel.brand}
                 </span>
               ` : ''}
             </div>
@@ -146,31 +147,28 @@ export class ConfigPanel {
       </div>
 
       <div class="config-body">
-        <!-- Cloud Provider & Technology Model Selection Card -->
+        <!-- Architecture Engine & Model Selection Card -->
         ${models.length > 0 ? `
           <div class="brand-model-selector-card">
             <div class="brand-model-header">
-              <span class="brand-model-title">🏷️ Brand & Technology Model</span>
-              ${currentModel ? `
-                <span class="brand-badge-pill" style="color: ${currentModel.brandInfo.color}; background: ${currentModel.brandInfo.bg}; border-color: ${currentModel.brandInfo.color};">
-                  ${currentModel.brand}
-                </span>
-              ` : ''}
+              <span class="brand-model-title">⚙️ Technology Model</span>
             </div>
 
-            <div class="form-group" style="margin-bottom: 10px;">
-              <label class="form-label">Brand / Provider</label>
-              <div class="inspector-brand-chips">
-                ${brands.map(b => `
-                  <button type="button" class="inspector-brand-chip ${b.brand === activeBrand ? 'active' : ''}" data-brand="${b.brand}" style="--chip-color: ${b.color}; --chip-bg: ${b.bg};" title="${b.name}">
-                    ${b.shortName}
-                  </button>
-                `).join('')}
+            ${hasMultipleBrands ? `
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label class="form-label">Provider</label>
+                <div class="inspector-brand-chips">
+                  ${brands.map(b => `
+                    <button type="button" class="inspector-brand-chip ${b.brand === activeBrand ? 'active' : ''}" data-brand="${b.brand}" style="--chip-color: ${b.color}; --chip-bg: ${b.bg};" title="${b.name}">
+                      ${b.shortName || b.brand}
+                    </button>
+                  `).join('')}
+                </div>
               </div>
-            </div>
+            ` : ''}
 
             <div class="form-group" style="margin-bottom: 6px;">
-              <label class="form-label">Technology Engine (${brandModels.length})</label>
+              <label class="form-label">Model (${brandModels.length})</label>
               <select class="form-select brand-model-select" id="node-model-select">
                 ${brandModels.map(m => `
                   <option value="${m.id}" ${m.id === currentModel?.id ? 'selected' : ''}>
@@ -354,9 +352,19 @@ export class ConfigPanel {
           </div>
         `;
 
+      case COMPONENT_TYPES.CLIENT:
+        return `
+          <div class="client-traffic-note">
+            <span class="client-note-icon">💡</span>
+            <div class="client-note-text">
+              <strong>Traffic Source:</strong> Represents client requests. Adjust total traffic volume (RPS) and burst patterns using the <strong>Traffic Simulation</strong> controls in the left sidebar.
+            </div>
+          </div>
+        `;
+
       default:
         return `
-          <p class="text-secondary" style="font-size: 13px;">Standard component. Scalable via upstream load balancing.</p>
+          <p class="text-secondary" style="font-size: 12.5px; line-height: 1.45;">Standard architectural component. Scalable via upstream routing and load balancing.</p>
         `;
     }
   }

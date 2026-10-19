@@ -163,15 +163,23 @@ export class ComponentPalette {
             </div>
             ${models.length > 0 ? `
               <select class="component-model-select-compact" data-type="${type}" title="Choose engine model">
-                ${Object.entries(brandGroups).map(([brandName, brandModels]) => `
-                  <optgroup label="${brandName}">
-                    ${brandModels.map(m => `
-                      <option value="${m.id}" ${m.id === activeModelId ? 'selected' : ''}>
-                        ${m.name}
-                      </option>
-                    `).join('')}
-                  </optgroup>
-                `).join('')}
+                ${Object.keys(brandGroups).length > 1 ? (
+                  Object.entries(brandGroups).map(([brandName, brandModels]) => `
+                    <optgroup label="${brandName}">
+                      ${brandModels.map(m => `
+                        <option value="${m.id}" ${m.id === activeModelId ? 'selected' : ''}>
+                          ${m.name}
+                        </option>
+                      `).join('')}
+                    </optgroup>
+                  `).join('')
+                ) : (
+                  models.map(m => `
+                    <option value="${m.id}" ${m.id === activeModelId ? 'selected' : ''}>
+                      ${m.name}
+                    </option>
+                  `).join('')
+                )}
               </select>
             ` : `
               <div class="component-desc">${meta.description}</div>
