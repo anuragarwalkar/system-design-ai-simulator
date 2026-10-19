@@ -999,9 +999,6 @@
   color: var(--text-primary);
   border-color: var(--border-subtle);
 }
-  background-color: var(--bg-surface-hover);
-  color: var(--text-primary);
-}
 
 /* Mobile Quick Menu Dropdown Popover */
 .mobile-menu-popover {
