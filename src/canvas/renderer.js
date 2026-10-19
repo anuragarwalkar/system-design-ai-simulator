@@ -66,6 +66,10 @@ export class CanvasRenderer {
 
   _setupResizeListener() {
     window.addEventListener('resize', () => this.resize());
+    if (window.ResizeObserver && this.canvas.parentElement) {
+      const ro = new ResizeObserver(() => this.resize());
+      ro.observe(this.canvas.parentElement);
+    }
   }
 
   _setupSimulationListener() {

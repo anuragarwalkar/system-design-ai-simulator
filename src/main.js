@@ -19,6 +19,7 @@ import { KeyboardHandler } from './interaction/keyboard.js';
 import { Toolbar } from './components/toolbar/toolbar.js';
 import { MobileNav } from './components/toolbar/mobile-nav.js';
 import { ComponentPalette } from './components/sidebar/component-palette.js';
+import { SidebarManager } from './components/sidebar/sidebar-manager.js';
 import { ConfigPanel } from './components/config-panel/config-panel.js';
 import { MetricsDashboard } from './components/simulation/metrics-dashboard.js';
 import { LoadInjector } from './components/simulation/load-injector.js';
@@ -49,6 +50,7 @@ async function bootstrap() {
 
   const sidebarContainer = document.getElementById('app-sidebar');
   new ComponentPalette(sidebarContainer, renderer);
+  new SidebarManager(renderer);
 
   const inspectorContainer = document.getElementById('app-inspector');
   new ConfigPanel(inspectorContainer);

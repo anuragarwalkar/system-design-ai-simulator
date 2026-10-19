@@ -32,6 +32,15 @@ export class Toolbar {
           </div>
         </div>
 
+        <!-- Sidebar Toggle Button -->
+        <button id="btn-toolbar-toggle-sidebar" class="toolbar-btn btn-sidebar-toggle active" title="Toggle Components Sidebar (Ctrl+[)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+          <span>Sidebar</span>
+        </button>
+
         <div class="toolbar-divider"></div>
 
         <div class="btn-group">

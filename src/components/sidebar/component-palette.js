@@ -41,7 +41,9 @@ export class ComponentPalette {
             <h2 class="palette-title">Components</h2>
             <p class="palette-subtitle">Tap or drag to add to system</p>
           </div>
-          <button id="btn-close-sidebar" class="btn-close-sidebar" title="Close Components">✕</button>
+          <button id="btn-close-sidebar" class="btn-close-sidebar" title="Hide Sidebar (Ctrl+[)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
         </div>
       </div>
 
