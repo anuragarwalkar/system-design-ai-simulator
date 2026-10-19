@@ -12,7 +12,7 @@
 
 import { stateManager } from '../../core/state-manager.js';
 import { eventBus } from '../../core/event-bus.js';
-import { EVENTS, COMPONENT_METADATA, COMPONENT_TYPES, PROTOCOLS_METADATA } from '../../core/constants.js';
+import { EVENTS, COMPONENT_METADATA, COMPONENT_TYPES, PROTOCOLS_METADATA, COMPONENT_MODELS, BRAND_PROVIDERS } from '../../core/constants.js';
 
 export class ConfigPanel {
   constructor(containerElement) {
@@ -100,6 +100,8 @@ export class ConfigPanel {
   renderNodeConfig(node) {
     const meta = COMPONENT_METADATA[node.component_type] || {};
     const config = node.config || {};
+    const models = COMPONENT_MODELS[node.component_type] || [];
+    const currentModel = models.find(m => m.id === node.model_id) || models[0] || null;
 
     this.container.innerHTML = `
       <div class="config-header">
@@ -109,7 +111,14 @@ export class ConfigPanel {
           </div>
           <div class="config-title-wrap">
             <input type="text" id="node-name-input" class="node-name-field" value="${node.name}" title="Edit Name" />
-            <span class="config-type-badge">${meta.name || node.component_type}</span>
+            <div class="config-type-row">
+              <span class="config-type-badge">${meta.name || node.component_type}</span>
+              ${currentModel ? `
+                <span class="brand-badge-pill" style="color: ${currentModel.brandInfo.color}; background: ${currentModel.brandInfo.bg}; border-color: ${currentModel.brandInfo.color};">
+                  ${currentModel.brandInfo.shortName}
+                </span>
+              ` : ''}
+            </div>
           </div>
           <button id="btn-close-config" class="btn-icon-close" title="Close">✕</button>
         </div>
@@ -128,13 +137,49 @@ export class ConfigPanel {
           </div>
           <div class="telemetry-item">
             <span class="telemetry-label">Latency</span>
-            <strong class="telemetry-val" id="tel-latency">${meta.baseLatencyMs}ms</strong>
+            <strong class="telemetry-val" id="tel-latency">${node.base_latency_ms || meta.baseLatencyMs}ms</strong>
           </div>
         </div>
       </div>
 
-      <!-- Dynamic Form by Component Type -->
       <div class="config-body">
+        <!-- Cloud Provider & Technology Model Selection Card -->
+        <div class="brand-model-selector-card">
+          <div class="brand-model-header">
+            <span class="brand-model-title">🏷️ Cloud Model / Brand</span>
+            ${currentModel ? `
+              <span class="brand-badge-pill" style="color: ${currentModel.brandInfo.color}; background: ${currentModel.brandInfo.bg}; border-color: ${currentModel.brandInfo.color};">
+                ${currentModel.brand}
+              </span>
+            ` : ''}
+          </div>
+          <div class="form-group" style="margin-bottom: 6px;">
+            <label class="form-label">Select Technology Engine</label>
+            <select class="form-select brand-model-select" id="node-model-select">
+              ${models.map(m => `
+                <option value="${m.id}" ${m.id === (node.model_id || models[0]?.id) ? 'selected' : ''}>
+                  ${m.name} [${m.brand}]
+                </option>
+              `).join('')}
+            </select>
+          </div>
+
+          ${currentModel ? `
+            <div class="model-highlights-box">
+              <div class="model-desc">${currentModel.description}</div>
+              <div class="model-highlights">
+                <strong>✨ Highlights:</strong> ${currentModel.highlights}
+              </div>
+              <div class="model-specs-row">
+                <span>Cap: <strong>${(currentModel.baseRps / 1000).toFixed(0)}k RPS</strong></span>
+                <span>Latency: <strong>${currentModel.baseLatencyMs}ms</strong></span>
+                <span>Est: <strong>$${(currentModel.hourlyCost * 730).toFixed(0)}/mo</strong></span>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Dynamic Form by Component Type -->
         ${this._renderTypeSpecificForms(node.component_type, config)}
 
         <!-- Beginner System Design Concept Card -->
@@ -303,6 +348,16 @@ export class ConfigPanel {
     if (nameInput) {
       nameInput.addEventListener('change', () => {
         stateManager.renameNode(node.id, nameInput.value.trim() || node.name);
+      });
+    }
+
+    // Technology Model & Brand Selector
+    const modelSelect = this.container.querySelector('#node-model-select');
+    if (modelSelect) {
+      modelSelect.addEventListener('change', (e) => {
+        const selectedModelId = e.target.value;
+        stateManager.updateNodeModel(node.id, selectedModelId, false);
+        this.renderNodeConfig(node);
       });
     }
 

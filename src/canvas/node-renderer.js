@@ -79,17 +79,39 @@ export class NodeRenderer {
     ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const displayName = node.name.length > 15 ? node.name.slice(0, 14) + '…' : node.name;
+    const maxTitleWidth = width - (node.brand_short && node.brand_short !== 'Standard' ? 82 : 46);
+    let displayName = node.name;
+    if (ctx.measureText(displayName).width > maxTitleWidth) {
+      while (displayName.length > 3 && ctx.measureText(displayName + '…').width > maxTitleWidth) {
+        displayName = displayName.slice(0, -1);
+      }
+      displayName += '…';
+    }
     ctx.fillText(displayName, node.x + 34, node.y + 20);
 
-    // 6. Component type badge
+    // 6. Component model / type subtitle
     ctx.fillStyle = subTextColor;
     ctx.font = '500 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText(meta.name || node.component_type, node.x + 34, node.y + 36);
+    const subLabel = node.model_name || meta.name || node.component_type;
+    const maxSubWidth = width - 46;
+    let truncatedSub = subLabel;
+    if (ctx.measureText(truncatedSub).width > maxSubWidth) {
+      while (truncatedSub.length > 3 && ctx.measureText(truncatedSub + '…').width > maxSubWidth) {
+        truncatedSub = truncatedSub.slice(0, -1);
+      }
+      truncatedSub += '…';
+    }
+    ctx.fillText(truncatedSub, node.x + 34, node.y + 36);
 
-    // 7. SPOF Warning Badge (if detected)
+    // 7. Brand Badge & SPOF Warning Badge (top right)
+    let rightOffset = node.x + width - 12;
     if (isSpof) {
-      this._renderSpofBadge(ctx, node.x + width - 18, node.y + 18);
+      this._renderSpofBadge(ctx, rightOffset - 6, node.y + 18);
+      rightOffset -= 22;
+    }
+
+    if (node.brand_short && node.brand_short !== 'Standard') {
+      this._renderBrandBadge(ctx, rightOffset, node.y + 18, node.brand_short, node.brand_color, node.brand_bg, isDark);
     }
 
     // 8. Divider line
@@ -172,6 +194,39 @@ export class NodeRenderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('!', x, y);
+  }
+
+  /**
+   * Render cloud provider / technology brand pill badge
+   * @private
+   */
+  _renderBrandBadge(ctx, x, y, brandShort, brandColor, brandBg, isDark) {
+    ctx.save();
+    ctx.font = '700 8.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const textWidth = ctx.measureText(brandShort).width;
+    const paddingX = 5;
+    const pillWidth = textWidth + paddingX * 2;
+    const pillHeight = 15;
+
+    const startX = x - pillWidth;
+    const startY = y - pillHeight / 2;
+
+    ctx.beginPath();
+    ctx.roundRect(startX, startY, pillWidth, pillHeight, 4);
+    ctx.fillStyle = brandBg || 'rgba(100, 116, 139, 0.16)';
+    ctx.fill();
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = brandColor || (isDark ? '#475569' : '#CBD5E1');
+    ctx.stroke();
+
+    ctx.fillStyle = brandColor || (isDark ? '#E2E8F0' : '#1E293B');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(brandShort, startX + pillWidth / 2, y);
+
+    ctx.restore();
+    return pillWidth;
   }
 
   /**

@@ -344,6 +344,7 @@ export class DragDropEngine {
   _onPaletteDrop(e) {
     e.preventDefault();
     const componentType = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('application/x-component-type');
+    const modelId = e.dataTransfer.getData('application/x-model-id') || null;
     if (!componentType) return;
 
     const world = this.camera.screenToWorld(e.clientX, e.clientY);
@@ -353,6 +354,7 @@ export class DragDropEngine {
 
     const nodeSpec = {
       component_type: componentType,
+      model_id: modelId,
       x,
       y
     };

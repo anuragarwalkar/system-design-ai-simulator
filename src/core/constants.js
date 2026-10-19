@@ -172,6 +172,433 @@ export const COMPONENT_METADATA = {
   }
 };
 
+export const BRAND_PROVIDERS = {
+  AWS: { name: 'AWS (Amazon Web Services)', shortName: 'AWS', color: '#FF9900', bg: 'rgba(255, 153, 0, 0.16)' },
+  CLOUDFLARE: { name: 'Cloudflare', shortName: 'Cloudflare', color: '#F38020', bg: 'rgba(243, 128, 32, 0.16)' },
+  GCP: { name: 'Google Cloud Platform', shortName: 'GCP', color: '#4285F4', bg: 'rgba(66, 133, 244, 0.16)' },
+  OSS: { name: 'Open Source / Self-Hosted', shortName: 'OSS', color: '#10B981', bg: 'rgba(16, 185, 129, 0.16)' },
+  REDIS: { name: 'Redis Labs', shortName: 'Redis', color: '#DC2626', bg: 'rgba(220, 38, 38, 0.16)' },
+  APACHE: { name: 'Apache Software', shortName: 'Apache', color: '#E11D48', bg: 'rgba(225, 29, 72, 0.16)' },
+  CNCF: { name: 'Cloud Native (CNCF / K8s)', shortName: 'K8s', color: '#326CE5', bg: 'rgba(50, 108, 229, 0.16)' },
+  FASTLY: { name: 'Fastly Edge', shortName: 'Fastly', color: '#FF282D', bg: 'rgba(255, 40, 45, 0.16)' },
+  GENERIC: { name: 'Standard / Generic', shortName: 'Standard', color: '#64748B', bg: 'rgba(100, 116, 139, 0.16)' }
+};
+
+export const COMPONENT_MODELS = {
+  [COMPONENT_TYPES.API_GATEWAY]: [
+    {
+      id: 'aws-api-gateway',
+      name: 'Amazon API Gateway',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 100000,
+      baseLatencyMs: 5.0,
+      hourlyCost: 0.12,
+      description: 'Fully managed AWS service for creating REST, HTTP, and WebSocket APIs at scale.',
+      highlights: 'Direct AWS Lambda integration, AWS IAM & Cognito authorization, native CloudWatch metrics, built-in payload caching and token bucket throttling.'
+    },
+    {
+      id: 'kong-gateway',
+      name: 'Kong API Gateway',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 140000,
+      baseLatencyMs: 2.0,
+      hourlyCost: 0.10,
+      description: 'Cloud-native, high-performance API gateway built on NGINX and OpenResty.',
+      highlights: 'Ultra-low sub-2ms latency, rich Lua/Go plugin ecosystem for JWT, rate-limiting, transform plugins, and multi-cloud agnostic deployment.'
+    },
+    {
+      id: 'cloudflare-workers',
+      name: 'Cloudflare Workers (Edge Gateway)',
+      brand: 'Cloudflare',
+      brandInfo: BRAND_PROVIDERS.CLOUDFLARE,
+      baseRps: 250000,
+      baseLatencyMs: 1.5,
+      hourlyCost: 0.08,
+      description: 'Edge-compute serverless gateway running on V8 isolates in 300+ global data centers.',
+      highlights: 'Executes routing logic within 5ms of 95% of world population, eliminates origin roundtrips, built-in DDoS shielding and edge KV cache.'
+    },
+    {
+      id: 'google-apigee',
+      name: 'Google Cloud Apigee',
+      brand: 'GCP',
+      brandInfo: BRAND_PROVIDERS.GCP,
+      baseRps: 80000,
+      baseLatencyMs: 6.0,
+      hourlyCost: 0.18,
+      description: 'Enterprise API management platform with deep AI analytics and developer portal.',
+      highlights: 'Advanced threat protection, enterprise OAuth2/SAML governance, API monetization, and machine-learning anomaly detection.'
+    },
+    {
+      id: 'envoy-gateway',
+      name: 'Envoy Gateway (CNCF)',
+      brand: 'CNCF',
+      brandInfo: BRAND_PROVIDERS.CNCF,
+      baseRps: 160000,
+      baseLatencyMs: 1.2,
+      hourlyCost: 0.09,
+      description: 'Modern C++ service mesh ingress and edge gateway designed for Kubernetes environments.',
+      highlights: 'Native gRPC, HTTP/3 QUIC, dynamic hot-reloading via xDS APIs, circuit breaking, and advanced distributed tracing.'
+    }
+  ],
+  [COMPONENT_TYPES.LOAD_BALANCER]: [
+    {
+      id: 'aws-alb',
+      name: 'AWS Application Load Balancer (ALB)',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 150000,
+      baseLatencyMs: 2.0,
+      hourlyCost: 0.07,
+      description: 'Layer 7 application load balancer with URL path and host-based routing.',
+      highlights: 'Native HTTP/2 & gRPC support, TLS offloading, integration with AWS WAF and ECS container target groups.'
+    },
+    {
+      id: 'aws-nlb',
+      name: 'AWS Network Load Balancer (NLB)',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 600000,
+      baseLatencyMs: 0.4,
+      hourlyCost: 0.08,
+      description: 'Layer 4 ultra-high performance transport balancer handling millions of concurrent requests.',
+      highlights: 'Sub-millisecond latency, static IP addresses per AZ, TCP/UDP pass-through, ideal for gaming and financial systems.'
+    },
+    {
+      id: 'nginx-lb',
+      name: 'NGINX Reverse Proxy & LB',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 200000,
+      baseLatencyMs: 1.2,
+      hourlyCost: 0.05,
+      description: 'Industry-standard high-performance asynchronous event-driven reverse proxy.',
+      highlights: 'Supports Least Connections, IP Hash, Round Robin, SSL termination, and static asset microcaching.'
+    },
+    {
+      id: 'cloudflare-lb',
+      name: 'Cloudflare Load Balancing',
+      brand: 'Cloudflare',
+      brandInfo: BRAND_PROVIDERS.CLOUDFLARE,
+      baseRps: 400000,
+      baseLatencyMs: 2.5,
+      hourlyCost: 0.09,
+      description: 'Global Anycast DNS load balancing and automatic multi-region failover.',
+      highlights: 'Directs user traffic to the geographically nearest healthy origin data center; instant zero-downtime failover.'
+    },
+    {
+      id: 'haproxy',
+      name: 'HAProxy Enterprise',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 280000,
+      baseLatencyMs: 0.8,
+      hourlyCost: 0.06,
+      description: 'Dedicated high-availability TCP/HTTP load balancer renowned for reliability.',
+      highlights: 'Deep health-checking, granular queue management, connection rate limiting, and transparent proxying.'
+    }
+  ],
+  [COMPONENT_TYPES.CACHE]: [
+    {
+      id: 'redis-core',
+      name: 'Redis In-Memory Key/Value',
+      brand: 'Redis',
+      brandInfo: BRAND_PROVIDERS.REDIS,
+      baseRps: 130000,
+      baseLatencyMs: 1.0,
+      hourlyCost: 0.20,
+      description: 'Single-threaded event-driven in-memory data store supporting strings, hashes, lists, sets, and sorted sets.',
+      highlights: 'Sub-millisecond reads/writes, LRU/LFU memory eviction, Pub/Sub channels, Lua scripts, and atomic increments.'
+    },
+    {
+      id: 'aws-elasticache',
+      name: 'Amazon ElastiCache (Redis)',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 150000,
+      baseLatencyMs: 1.2,
+      hourlyCost: 0.25,
+      description: 'Fully managed Redis service with automated Multi-AZ failover and cluster sharding.',
+      highlights: 'Zero-management patching, automatic read-replica scaling across Availability Zones, encrypted at rest and in transit.'
+    },
+    {
+      id: 'memcached',
+      name: 'Memcached Pure Cache',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 180000,
+      baseLatencyMs: 0.7,
+      hourlyCost: 0.15,
+      description: 'Multi-threaded, high-concurrency simple string key-value in-memory cache.',
+      highlights: 'Multi-core CPU scaling, slab allocator memory management, ideal for simple read-heavy HTML/JSON fragment caching.'
+    },
+    {
+      id: 'dragonfly',
+      name: 'Dragonfly Modern Memory DB',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 350000,
+      baseLatencyMs: 0.6,
+      hourlyCost: 0.22,
+      description: 'Next-generation multi-threaded Redis alternative delivering 25x throughput per instance.',
+      highlights: 'Thread-per-core shared-nothing architecture, scales up to 1TB RAM per single node without clustering complexity.'
+    }
+  ],
+  [COMPONENT_TYPES.DATABASE]: [
+    {
+      id: 'postgres-aurora',
+      name: 'Amazon Aurora (PostgreSQL)',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 8000,
+      baseLatencyMs: 18.0,
+      hourlyCost: 0.48,
+      description: 'Cloud-native distributed relational database with 6-way storage replication across 3 AZs.',
+      highlights: 'ACID transactions, complex SQL joins, up to 15 auto-scaling read replicas with sub-10ms replica lag.'
+    },
+    {
+      id: 'dynamodb',
+      name: 'Amazon DynamoDB',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 60000,
+      baseLatencyMs: 4.0,
+      hourlyCost: 0.35,
+      description: 'Fully managed serverless NoSQL key-value and document database with single-digit millisecond latency.',
+      highlights: 'Virtually unlimited horizontal auto-partitioning by Hash Key, global tables for multi-region replication, built-in TTL.'
+    },
+    {
+      id: 'mongodb-atlas',
+      name: 'MongoDB Atlas',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 12000,
+      baseLatencyMs: 22.0,
+      hourlyCost: 0.40,
+      description: 'Distributed JSON/BSON document database with flexible schema and horizontal sharding.',
+      highlights: 'Rich document queries, secondary indexes, aggregation pipeline, and replica set automated failover.'
+    },
+    {
+      id: 'cockroachdb',
+      name: 'CockroachDB Distributed SQL',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 15000,
+      baseLatencyMs: 28.0,
+      hourlyCost: 0.50,
+      description: 'Resilient multi-cloud distributed SQL database providing serializable transactions without SPOF.',
+      highlights: 'Raft consensus per range, multi-region survival of entire cloud data center outages, standard Postgres wire compatibility.'
+    },
+    {
+      id: 'apache-cassandra',
+      name: 'Apache Cassandra',
+      brand: 'Apache',
+      brandInfo: BRAND_PROVIDERS.APACHE,
+      baseRps: 50000,
+      baseLatencyMs: 12.0,
+      hourlyCost: 0.42,
+      description: 'Masterless wide-column distributed NoSQL database designed for write-heavy high-velocity workloads.',
+      highlights: 'LSM-tree write architecture, peer-to-peer ring topology, tunable consistency (QUORUM/ONE/ALL), zero single point of failure.'
+    }
+  ],
+  [COMPONENT_TYPES.MESSAGE_QUEUE]: [
+    {
+      id: 'apache-kafka',
+      name: 'Apache Kafka (Event Stream)',
+      brand: 'Apache',
+      brandInfo: BRAND_PROVIDERS.APACHE,
+      baseRps: 120000,
+      baseLatencyMs: 4.0,
+      hourlyCost: 0.28,
+      description: 'Distributed append-only commit log capable of processing millions of events per second.',
+      highlights: 'Partition-level order guarantees, consumer groups, replayable event retention on disk, event-driven microservices.'
+    },
+    {
+      id: 'aws-sqs',
+      name: 'Amazon SQS (Managed Queue)',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 40000,
+      baseLatencyMs: 10.0,
+      hourlyCost: 0.12,
+      description: 'Fully managed distributed message queuing service with Standard and FIFO delivery.',
+      highlights: 'Zero server maintenance, auto-scales automatically, dead-letter queues (DLQ), visibility timeouts.'
+    },
+    {
+      id: 'rabbitmq',
+      name: 'RabbitMQ (AMQP Broker)',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 55000,
+      baseLatencyMs: 6.0,
+      hourlyCost: 0.16,
+      description: 'Erlang-based reliable message broker supporting complex routing patterns.',
+      highlights: 'Direct, Topic, Fanout, and Headers exchanges, publisher confirms, acknowledgment-based guaranteed delivery.'
+    },
+    {
+      id: 'redis-streams',
+      name: 'Redis Streams',
+      brand: 'Redis',
+      brandInfo: BRAND_PROVIDERS.REDIS,
+      baseRps: 90000,
+      baseLatencyMs: 1.5,
+      hourlyCost: 0.18,
+      description: 'Lightweight in-memory append-only log data structure with consumer groups.',
+      highlights: 'Sub-millisecond dispatch, minimal infrastructure footprint, radix-tree indexed event IDs.'
+    }
+  ],
+  [COMPONENT_TYPES.CDN]: [
+    {
+      id: 'cloudflare-cdn',
+      name: 'Cloudflare Edge CDN',
+      brand: 'Cloudflare',
+      brandInfo: BRAND_PROVIDERS.CLOUDFLARE,
+      baseRps: 650000,
+      baseLatencyMs: 3.0,
+      hourlyCost: 0.08,
+      description: 'Global Anycast network spanning 300+ cities with edge caching and tier-1 DDoS protection.',
+      highlights: 'Argo Smart Routing, Polish image optimization, Brotli compression, edge SSL, and Web Application Firewall (WAF).'
+    },
+    {
+      id: 'aws-cloudfront',
+      name: 'Amazon CloudFront',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 550000,
+      baseLatencyMs: 4.0,
+      hourlyCost: 0.09,
+      description: 'Global content delivery network deeply integrated with AWS S3, EC2, and Lambda@Edge.',
+      highlights: 'Origin Shield caching tier, real-time logs to Kinesis, signed URLs/cookies for private video streaming.'
+    },
+    {
+      id: 'fastly',
+      name: 'Fastly Edge Cloud',
+      brand: 'Fastly',
+      brandInfo: BRAND_PROVIDERS.FASTLY,
+      baseRps: 600000,
+      baseLatencyMs: 2.5,
+      hourlyCost: 0.11,
+      description: 'Programmable edge cloud platform powered by customized Varnish (VCL) proxy caching.',
+      highlights: 'Instant global cache purges in 150ms, real-time streaming logs, dynamic edge rendering.'
+    },
+    {
+      id: 'akamai',
+      name: 'Akamai Intelligent Edge',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 450000,
+      baseLatencyMs: 4.5,
+      hourlyCost: 0.14,
+      description: 'Massive enterprise edge distribution network with over 350,000 servers in 130+ countries.',
+      highlights: 'Adaptive media streaming, carrier-grade peering, enterprise zero-trust edge security.'
+    }
+  ],
+  [COMPONENT_TYPES.MICROSERVICE]: [
+    {
+      id: 'aws-ecs-fargate',
+      name: 'AWS ECS / Fargate (Container)',
+      brand: 'AWS',
+      brandInfo: BRAND_PROVIDERS.AWS,
+      baseRps: 14000,
+      baseLatencyMs: 22.0,
+      hourlyCost: 0.22,
+      description: 'Serverless container orchestration for Docker images without managing EC2 infrastructure.',
+      highlights: 'Seamless task auto-scaling, VPC private networking, AWS Secrets Manager integration.'
+    },
+    {
+      id: 'k8s-pods',
+      name: 'Kubernetes Pods (EKS/GKE)',
+      brand: 'CNCF',
+      brandInfo: BRAND_PROVIDERS.CNCF,
+      baseRps: 22000,
+      baseLatencyMs: 18.0,
+      hourlyCost: 0.25,
+      description: 'Production container clusters with automated rollouts, self-healing, and service discovery.',
+      highlights: 'Horizontal Pod Autoscaler (HPA), sidecar proxies, ConfigMaps, readiness/liveness health probes.'
+    },
+    {
+      id: 'google-cloud-run',
+      name: 'Google Cloud Run (Serverless)',
+      brand: 'GCP',
+      brandInfo: BRAND_PROVIDERS.GCP,
+      baseRps: 16000,
+      baseLatencyMs: 28.0,
+      hourlyCost: 0.18,
+      description: 'Managed serverless platform that automatically scales container requests from 0 to thousands.',
+      highlights: 'Zero idle cost with scale-to-zero, fast cold-starts, automatic HTTPS certificates.'
+    },
+    {
+      id: 'go-microservice',
+      name: 'Go / Gin Compiled Server',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 38000,
+      baseLatencyMs: 8.0,
+      hourlyCost: 0.15,
+      description: 'Statically compiled Go binary utilizing lightweight goroutines and high concurrency.',
+      highlights: 'Sub-10ms response times, minimal RAM footprint (<30MB), high throughput per CPU core.'
+    },
+    {
+      id: 'node-microservice',
+      name: 'Node.js Express / NestJS',
+      brand: 'OSS',
+      brandInfo: BRAND_PROVIDERS.OSS,
+      baseRps: 9000,
+      baseLatencyMs: 24.0,
+      hourlyCost: 0.18,
+      description: 'V8 single-threaded non-blocking event-driven JavaScript/TypeScript backend.',
+      highlights: 'Rich NPM package ecosystem, asynchronous I/O, rapid API prototyping, and WebSocket support.'
+    }
+  ],
+  [COMPONENT_TYPES.CLIENT]: [
+    {
+      id: 'web-browser',
+      name: 'Web Browser (React/Next.js)',
+      brand: 'Web',
+      brandInfo: BRAND_PROVIDERS.GENERIC,
+      baseRps: 1000000,
+      baseLatencyMs: 0,
+      hourlyCost: 0.00,
+      description: 'Single-page applications (SPA) and server-side rendered web frontend traffic.',
+      highlights: 'HTTP/HTTPS requests, WebSocket real-time connections, client-side session cookies.'
+    },
+    {
+      id: 'mobile-app',
+      name: 'Mobile App (iOS / Android)',
+      brand: 'Mobile',
+      brandInfo: BRAND_PROVIDERS.GENERIC,
+      baseRps: 1000000,
+      baseLatencyMs: 0,
+      hourlyCost: 0.00,
+      description: 'Native mobile client apps operating on cellular 4G/5G and WiFi networks.',
+      highlights: 'Variable network connectivity, exponential backoff retries, mobile push notification tokens.'
+    },
+    {
+      id: 'iot-device',
+      name: 'IoT Sensor Fleet',
+      brand: 'IoT',
+      brandInfo: BRAND_PROVIDERS.GENERIC,
+      baseRps: 500000,
+      baseLatencyMs: 0,
+      hourlyCost: 0.00,
+      description: 'Distributed network of smart meters, sensors, and connected hardware devices.',
+      highlights: 'High-frequency telemetry data pings, MQTT and lightweight HTTP payloads.'
+    },
+    {
+      id: 'b2b-webhook',
+      name: 'B2B Partner Webhook / API',
+      brand: 'B2B',
+      brandInfo: BRAND_PROVIDERS.GENERIC,
+      baseRps: 200000,
+      baseLatencyMs: 0,
+      hourlyCost: 0.00,
+      description: 'External server-to-server API integrations, payment webhooks (Stripe), and cron jobs.',
+      highlights: 'High batch payload volumes, HMAC signature verification, idempotent event delivery.'
+    }
+  ]
+};
+
 export const PROTOCOLS_METADATA = {
   'HTTP/REST': {
     name: 'HTTP/1.1 REST',

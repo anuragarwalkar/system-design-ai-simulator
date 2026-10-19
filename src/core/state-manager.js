@@ -9,7 +9,7 @@
 
 import { eventBus } from './event-bus.js';
 import { wasmBridge } from './wasm-bridge.js';
-import { EVENTS, COMPONENT_METADATA } from './constants.js';
+import { EVENTS, COMPONENT_METADATA, COMPONENT_MODELS } from './constants.js';
 
 export class StateManager {
   constructor() {
@@ -64,15 +64,36 @@ export class StateManager {
   addNode(nodeSpec) {
     const id = nodeSpec.id || `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const meta = COMPONENT_METADATA[nodeSpec.component_type] || {};
+    const models = COMPONENT_MODELS[nodeSpec.component_type] || [];
+    let selectedModel = models.find(m => m.id === nodeSpec.model_id);
+    if (!selectedModel && nodeSpec.name) {
+      const lower = nodeSpec.name.toLowerCase();
+      selectedModel = models.find(m =>
+        lower.includes(m.name.toLowerCase()) ||
+        lower.includes(m.brand.toLowerCase()) ||
+        (m.brandInfo && lower.includes(m.brandInfo.shortName.toLowerCase()))
+      );
+    }
+    if (!selectedModel && models.length > 0) {
+      selectedModel = models[0];
+    }
 
     const node = {
       id,
-      name: nodeSpec.name || meta.name || 'Component',
+      name: nodeSpec.name || (selectedModel ? selectedModel.name : (meta.name || 'Component')),
       component_type: nodeSpec.component_type,
+      model_id: selectedModel ? selectedModel.id : null,
+      model_name: selectedModel ? selectedModel.name : (meta.name || 'Component'),
+      brand: selectedModel ? selectedModel.brand : 'Generic',
+      brand_short: selectedModel && selectedModel.brandInfo ? selectedModel.brandInfo.shortName : 'Standard',
+      brand_color: selectedModel && selectedModel.brandInfo ? selectedModel.brandInfo.color : '#64748B',
+      brand_bg: selectedModel && selectedModel.brandInfo ? selectedModel.brandInfo.bg : 'rgba(100, 116, 139, 0.16)',
       x: Math.round(nodeSpec.x || 100),
       y: Math.round(nodeSpec.y || 100),
       config: { ...(nodeSpec.config || {}) },
-      custom_capacity_rps: nodeSpec.custom_capacity_rps || null
+      custom_capacity_rps: nodeSpec.custom_capacity_rps || (selectedModel ? selectedModel.baseRps : null),
+      base_latency_ms: selectedModel ? selectedModel.baseLatencyMs : (meta.baseLatencyMs || 5),
+      hourly_cost: selectedModel ? selectedModel.hourlyCost : (meta.hourlyCost || 0.10)
     };
 
     this.nodes.set(id, node);
@@ -166,6 +187,42 @@ export class StateManager {
     node.name = newName;
     wasmBridge.addNode(node);
     eventBus.emit(EVENTS.NODE_UPDATED, node);
+    this.scheduleAutoSave();
+  }
+
+  /**
+   * Switch the model/brand of an existing node
+   * @param {string} nodeId
+   * @param {string} modelId
+   * @param {boolean} shouldRename
+   */
+  updateNodeModel(nodeId, modelId, shouldRename = false) {
+    const node = this.nodes.get(nodeId);
+    if (!node) return;
+
+    const models = COMPONENT_MODELS[node.component_type] || [];
+    const model = models.find(m => m.id === modelId);
+    if (!model) return;
+
+    const wasDefaultOrModelName = !node.name || node.name === 'Component' || models.some(m => m.name === node.name);
+
+    node.model_id = model.id;
+    node.model_name = model.name;
+    node.brand = model.brand;
+    node.brand_short = model.brandInfo.shortName;
+    node.brand_color = model.brandInfo.color;
+    node.brand_bg = model.brandInfo.bg;
+    node.custom_capacity_rps = model.baseRps;
+    node.base_latency_ms = model.baseLatencyMs;
+    node.hourly_cost = model.hourlyCost;
+
+    if (shouldRename || wasDefaultOrModelName) {
+      node.name = model.name;
+    }
+
+    wasmBridge.addNode(node);
+    eventBus.emit(EVENTS.NODE_UPDATED, node);
+    this.triggerRealtimeAnalysis();
     this.scheduleAutoSave();
   }
 

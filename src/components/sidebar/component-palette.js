@@ -6,7 +6,7 @@
  * alongside sorted interview practice scenarios. Fully optimized for touch & mobile.
  */
 
-import { COMPONENT_METADATA, EVENTS } from '../../core/constants.js';
+import { COMPONENT_METADATA, EVENTS, COMPONENT_MODELS, BRAND_PROVIDERS } from '../../core/constants.js';
 import { SCENARIOS } from '../../ai/scenarios.js';
 import { stateManager } from '../../core/state-manager.js';
 import { historyManager } from '../../core/history-manager.js';
@@ -18,6 +18,7 @@ export class ComponentPalette {
   constructor(containerElement, canvasRenderer) {
     this.container = containerElement;
     this.renderer = canvasRenderer;
+    this.selectedBrandFilter = 'ALL';
     this.render();
   }
 
@@ -47,24 +48,54 @@ export class ComponentPalette {
         <h3 class="section-title">Infrastructure Components</h3>
       </div>
 
+      <!-- Cloud Brand Filter Pills -->
+      <div class="brand-filter-bar">
+        <button class="brand-filter-pill ${this.selectedBrandFilter === 'ALL' ? 'active' : ''}" data-brand="ALL">All Models</button>
+        <button class="brand-filter-pill ${this.selectedBrandFilter === 'AWS' ? 'active' : ''}" data-brand="AWS" style="--brand-accent: #FF9900;">AWS</button>
+        <button class="brand-filter-pill ${this.selectedBrandFilter === 'Cloudflare' ? 'active' : ''}" data-brand="Cloudflare" style="--brand-accent: #F38020;">Cloudflare</button>
+        <button class="brand-filter-pill ${this.selectedBrandFilter === 'OSS' ? 'active' : ''}" data-brand="OSS" style="--brand-accent: #10B981;">Open Source</button>
+        <button class="brand-filter-pill ${this.selectedBrandFilter === 'GCP' ? 'active' : ''}" data-brand="GCP" style="--brand-accent: #4285F4;">GCP</button>
+      </div>
+
       <div class="component-list" id="component-list">
-        ${Object.entries(COMPONENT_METADATA).map(([type, meta]) => `
-          <div class="component-card" draggable="true" data-type="${type}" role="button" tabindex="0" title="Tap to add ${meta.name} to canvas">
-            <div class="component-icon-badge" style="background: ${meta.accentBg}; color: ${meta.color};">
-              <span class="component-dot" style="background: ${meta.color};"></span>
-            </div>
-            <div class="component-info">
-              <div class="component-name-row">
-                <span class="component-name">${meta.name}</span>
-                <button class="btn-component-learn" data-type="${type}" title="Learn about ${meta.name} (Analogy, trade-offs & tips)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  <span>Learn</span>
-                </button>
+        ${Object.entries(COMPONENT_METADATA).map(([type, meta]) => {
+          const models = COMPONENT_MODELS[type] || [];
+          const activeModel = (this.selectedBrandFilter !== 'ALL'
+            ? models.find(m => m.brand === this.selectedBrandFilter)
+            : null) || models[0] || null;
+
+          const displayName = activeModel ? activeModel.name : meta.name;
+          const displayDesc = activeModel ? activeModel.description : meta.description;
+          const brandShort = activeModel ? activeModel.brandInfo.shortName : '';
+          const brandColor = activeModel ? activeModel.brandInfo.color : '#64748B';
+          const brandBg = activeModel ? activeModel.brandInfo.bg : 'rgba(100, 116, 139, 0.15)';
+          const modelId = activeModel ? activeModel.id : '';
+
+          return `
+            <div class="component-card" draggable="true" data-type="${type}" data-model-id="${modelId}" role="button" tabindex="0" title="Tap to add ${displayName} to canvas">
+              <div class="component-icon-badge" style="background: ${meta.accentBg}; color: ${meta.color};">
+                <span class="component-dot" style="background: ${meta.color};"></span>
               </div>
-              <div class="component-desc">${meta.description}</div>
+              <div class="component-info">
+                <div class="component-name-row">
+                  <span class="component-name">${displayName}</span>
+                  <div class="component-card-badges">
+                    ${brandShort && brandShort !== 'Standard' ? `
+                      <span class="brand-badge-pill" style="color: ${brandColor}; background: ${brandBg}; border-color: ${brandColor};">
+                        ${brandShort}
+                      </span>
+                    ` : ''}
+                    <button class="btn-component-learn" data-type="${type}" title="Learn about ${displayName}">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                      <span>Learn</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="component-desc">${displayDesc}</div>
+              </div>
             </div>
-          </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
 
       <div class="palette-section-divider"></div>
@@ -151,13 +182,30 @@ export class ComponentPalette {
   }
 
   _bindDragAndClickEvents() {
+    // Brand filter pill tabs
+    const brandPills = this.container.querySelectorAll('.brand-filter-pill');
+    brandPills.forEach(pill => {
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const brand = pill.getAttribute('data-brand');
+        if (this.selectedBrandFilter !== brand) {
+          this.selectedBrandFilter = brand;
+          this.render();
+        }
+      });
+    });
+
     const cards = this.container.querySelectorAll('.component-card');
     cards.forEach(card => {
       // HTML5 Drag for desktop
       card.addEventListener('dragstart', (e) => {
         const type = card.getAttribute('data-type');
+        const modelId = card.getAttribute('data-model-id') || '';
         e.dataTransfer.setData('text/plain', type);
         e.dataTransfer.setData('application/x-component-type', type);
+        if (modelId) {
+          e.dataTransfer.setData('application/x-model-id', modelId);
+        }
         card.classList.add('dragging');
       });
 
@@ -170,7 +218,8 @@ export class ComponentPalette {
         // Ignore if clicking the Learn button
         if (e.target.closest('.btn-component-learn')) return;
         const type = card.getAttribute('data-type');
-        this.addNodeToCanvas(type);
+        const modelId = card.getAttribute('data-model-id') || '';
+        this.addNodeToCanvas(type, modelId);
       });
     });
 
@@ -185,7 +234,7 @@ export class ComponentPalette {
     });
   }
 
-  addNodeToCanvas(componentType) {
+  addNodeToCanvas(componentType, modelId = null) {
     const meta = COMPONENT_METADATA[componentType];
     const snap = 40;
 
@@ -205,6 +254,9 @@ export class ComponentPalette {
       x: targetX,
       y: targetY
     };
+    if (modelId) {
+      nodeSpec.model_id = modelId;
+    }
 
     let createdNodeId = null;
     historyManager.execute({
@@ -219,7 +271,10 @@ export class ComponentPalette {
       }
     });
 
-    showToast(`Added ${meta ? meta.name : componentType} to canvas`, 'success', 2000);
+    const displayTitle = nodeSpec.model_id
+      ? (COMPONENT_MODELS[componentType]?.find(m => m.id === modelId)?.name || meta?.name || componentType)
+      : (meta ? meta.name : componentType);
+    showToast(`Added ${displayTitle} to canvas`, 'success', 2000);
 
     // On mobile devices, dismiss sidebar after tapping so canvas is visible
     if (window.innerWidth <= 900) {
