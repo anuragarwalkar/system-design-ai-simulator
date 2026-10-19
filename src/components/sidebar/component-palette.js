@@ -278,6 +278,15 @@ export class ComponentPalette {
       targetY = Math.round((this.renderer.camera.y - 45 + jitterY) / snap) * snap;
     }
 
+    // Avoid stacking directly on top of an existing node
+    const existingNodes = stateManager.nodes || [];
+    let attempts = 0;
+    while (attempts < 10 && existingNodes.some(n => Math.abs(n.x - targetX) < 160 && Math.abs(n.y - targetY) < 80)) {
+      targetY += 80;
+      targetX += 40;
+      attempts++;
+    }
+
     const nodeSpec = {
       component_type: componentType,
       x: targetX,

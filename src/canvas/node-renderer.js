@@ -74,45 +74,61 @@ export class NodeRenderer {
     ctx.fillStyle = accentColor;
     ctx.fill();
 
-    // 5. Node name (truncated if long)
+    // 5. Pre-calculate right-side badges layout to eliminate ANY font/badge overlap
+    const hasBrand = node.brand_short && node.brand_short !== 'Standard';
+    let brandPillWidth = 0;
+    if (hasBrand) {
+      ctx.save();
+      ctx.font = '700 8.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      brandPillWidth = ctx.measureText(node.brand_short).width + 10;
+      ctx.restore();
+    }
+
+    // Determine badge positions from right edge
+    let currentRightX = node.x + width - 12;
+    if (isSpof) {
+      this._renderSpofBadge(ctx, currentRightX - 6, node.y + 18);
+      currentRightX -= 22;
+    }
+
+    let brandStartX = currentRightX;
+    if (hasBrand) {
+      this._renderBrandBadge(ctx, currentRightX, node.y + 18, node.brand_short, node.brand_color, node.brand_bg, isDark);
+      brandStartX = currentRightX - brandPillWidth;
+    }
+
+    // Leftmost boundary of all right-side badges (with a 8px safety buffer)
+    const leftmostBadgeX = hasBrand ? brandStartX : (isSpof ? currentRightX : node.x + width - 12);
+    const titleStartX = node.x + 34;
+    const maxTitleWidth = Math.max(30, leftmostBadgeX - titleStartX - 8);
+
+    // 6. Node name (strictly truncated before reaching any badge)
     ctx.fillStyle = textColor;
     ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const maxTitleWidth = width - (node.brand_short && node.brand_short !== 'Standard' ? 82 : 46);
     let displayName = node.name;
     if (ctx.measureText(displayName).width > maxTitleWidth) {
-      while (displayName.length > 3 && ctx.measureText(displayName + '…').width > maxTitleWidth) {
+      while (displayName.length > 2 && ctx.measureText(displayName + '…').width > maxTitleWidth) {
         displayName = displayName.slice(0, -1);
       }
       displayName += '…';
     }
-    ctx.fillText(displayName, node.x + 34, node.y + 20);
+    ctx.fillText(displayName, titleStartX, node.y + 20);
 
-    // 6. Component model / type subtitle
+    // 7. Component model / type subtitle (bounded cleanly)
     ctx.fillStyle = subTextColor;
     ctx.font = '500 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     const subLabel = node.model_name || meta.name || node.component_type;
-    const maxSubWidth = width - 46;
+    const maxSubWidth = Math.max(40, width - 46);
     let truncatedSub = subLabel;
     if (ctx.measureText(truncatedSub).width > maxSubWidth) {
-      while (truncatedSub.length > 3 && ctx.measureText(truncatedSub + '…').width > maxSubWidth) {
+      while (truncatedSub.length > 2 && ctx.measureText(truncatedSub + '…').width > maxSubWidth) {
         truncatedSub = truncatedSub.slice(0, -1);
       }
       truncatedSub += '…';
     }
-    ctx.fillText(truncatedSub, node.x + 34, node.y + 36);
-
-    // 7. Brand Badge & SPOF Warning Badge (top right)
-    let rightOffset = node.x + width - 12;
-    if (isSpof) {
-      this._renderSpofBadge(ctx, rightOffset - 6, node.y + 18);
-      rightOffset -= 22;
-    }
-
-    if (node.brand_short && node.brand_short !== 'Standard') {
-      this._renderBrandBadge(ctx, rightOffset, node.y + 18, node.brand_short, node.brand_color, node.brand_bg, isDark);
-    }
+    ctx.fillText(truncatedSub, titleStartX, node.y + 36);
 
     // 8. Divider line
     ctx.beginPath();

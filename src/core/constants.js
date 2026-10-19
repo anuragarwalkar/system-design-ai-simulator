@@ -757,7 +757,7 @@ export const EVENTS = {
 };
 
 export const CANVAS_CONFIG = {
-  NODE_WIDTH: 180,
+  NODE_WIDTH: 204,
   NODE_HEIGHT: 96,
   BORDER_RADIUS: 12,
   PORT_RADIUS: 5,
