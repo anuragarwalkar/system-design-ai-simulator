@@ -1,0 +1,63 @@
+{
+  "name": "SystemFlow — Interactive System Design Simulator",
+  "short_name": "SystemFlow",
+  "description": "High-Performance 60FPS System Design Simulator powered by WebAssembly, HTML5 Canvas, and AI",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0D0F17",
+  "theme_color": "#0D0F17",
+  "categories": ["productivity", "developer tools", "education"],
+  "icons": [
+    {
+      "src": "./icons/systemflow-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/systemflow-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/systemflow-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/systemflow-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/systemflow-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/systemflow-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/systemflow-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open SystemFlow",
+      "url": "./",
+      "description": "Launch SystemFlow System Design Canvas",
+      "icons": [{ "src": "./icons/systemflow-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
