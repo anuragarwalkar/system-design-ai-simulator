@@ -14,10 +14,10 @@ import { showToast } from './dialog.js';
 const ONBOARDING_STEPS = [
   {
     step: 1,
-    badge: 'Welcome to System Design',
+    badge: 'Welcome to SystemFlow',
     title: 'Master Distributed Architecture from Scratch',
     subtitle: 'Learn how modern tech giants (like Netflix, Uber, and Twitter) handle millions of requests without crashing.',
-    icon: '⚡',
+    icon: '<img src="./icons/icon-192.png" width="40" height="40" alt="SystemFlow" style="border-radius:50%; display:block; filter: drop-shadow(0 2px 8px rgba(6,182,212,0.5));" />',
     illustration: `
       <div class="onboarding-flow-preview">
         <div class="flow-node blue">Client</div>

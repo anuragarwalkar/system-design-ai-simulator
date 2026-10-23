@@ -11,6 +11,7 @@ import { historyManager } from '../../core/history-manager.js';
 import { eventBus } from '../../core/event-bus.js';
 import { EVENTS } from '../../core/constants.js';
 import { showConfirmModal, showToast } from '../ui/dialog.js';
+import { pwaManager } from '../../core/pwa-manager.js';
 
 export class Toolbar {
   constructor(containerElement, canvasRenderer) {
@@ -25,10 +26,10 @@ export class Toolbar {
 
     this.container.innerHTML = `
       <div class="toolbar-left">
-        <div class="brand">
-          <div class="brand-logo">⚡</div>
+        <div class="brand" title="SystemFlow — System Design Simulator">
+          <img class="brand-logo" src="./icons/systemflow-192.png?v=white" alt="SystemFlow Logo" width="32" height="32" />
           <div class="brand-text">
-            <span class="brand-title">SysDesign</span>
+            <span class="brand-title">SystemFlow</span>
           </div>
         </div>
 
@@ -120,10 +121,19 @@ export class Toolbar {
             <input type="file" id="input-import-json-mobile" accept=".json" style="display: none;">
           </label>
           <div class="mobile-menu-divider"></div>
+          <button id="menu-opt-pwa-install" class="mobile-menu-item" style="${pwaManager.canInstall ? 'display: flex;' : 'display: none;'}">
+            📲 Install SystemFlow App
+          </button>
           <button id="menu-opt-reset" class="mobile-menu-item danger">
             🗑️ Reset Canvas
           </button>
         </div>
+
+        <!-- PWA Install Button -->
+        <button id="btn-pwa-install" class="toolbar-btn btn-pwa-install" style="${pwaManager.canInstall ? 'display: inline-flex;' : 'display: none;'}" title="Install SystemFlow App">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Install</span>
+        </button>
 
         <!-- AI Assistant Toggle Button -->
         <button id="btn-toggle-ai" class="btn-ai-sparkle" title="Toggle AI Architect (LangChain)">
@@ -198,7 +208,7 @@ export class Toolbar {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `system-design-architecture-${Date.now()}.json`;
+      a.download = `systemflow-architecture-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
       showToast('Architecture exported to JSON', 'success');
@@ -294,6 +304,35 @@ export class Toolbar {
         this.container.querySelector('#btn-reset').click();
       });
     }
+
+    // PWA Install Button Handlers
+    const pwaBtn = this.container.querySelector('#btn-pwa-install');
+    if (pwaBtn) {
+      pwaBtn.addEventListener('click', () => pwaManager.promptInstall());
+    }
+
+    const mobilePwaBtn = this.container.querySelector('#menu-opt-pwa-install');
+    if (mobilePwaBtn) {
+      mobilePwaBtn.addEventListener('click', () => {
+        const popover = this.container.querySelector('#mobile-more-popover');
+        if (popover) popover.classList.remove('open');
+        pwaManager.promptInstall();
+      });
+    }
+
+    eventBus.on('pwa:install-ready', () => {
+      const p = this.container.querySelector('#btn-pwa-install');
+      const m = this.container.querySelector('#menu-opt-pwa-install');
+      if (p) p.style.display = 'inline-flex';
+      if (m) m.style.display = 'flex';
+    });
+
+    eventBus.on('pwa:installed', () => {
+      const p = this.container.querySelector('#btn-pwa-install');
+      const m = this.container.querySelector('#menu-opt-pwa-install');
+      if (p) p.style.display = 'none';
+      if (m) m.style.display = 'none';
+    });
 
     // Listen to analysis updates to update Health Score pill
     eventBus.on(EVENTS.ANALYSIS_UPDATED, (report) => {

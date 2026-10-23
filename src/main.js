@@ -27,9 +27,10 @@ import { AiChatPanel } from './components/ai/ai-chat.js';
 import { ArchitectureEvaluationPanel } from './components/ai/ai-evaluation.js';
 import { OnboardingTutorial } from './components/ui/onboarding.js';
 import { showToast } from './components/ui/dialog.js';
+import { pwaManager } from './core/pwa-manager.js';
 
 async function bootstrap() {
-  console.log('[App] Bootstrapping System Design AI Simulator...');
+  console.log('[SystemFlow] Bootstrapping SystemFlow...');
 
   // 1. Initialize State and WASM engine
   await stateManager.init();
@@ -93,7 +94,7 @@ async function bootstrap() {
     }, 400);
   }
 
-  console.log('[App] System Design AI Simulator successfully running at 60FPS.');
+  console.log('[SystemFlow] SystemFlow successfully running at 60FPS.');
 }
 
 window.addEventListener('DOMContentLoaded', bootstrap);
